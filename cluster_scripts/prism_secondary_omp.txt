@@ -1,0 +1,1 @@
+/Applications/MATLAB_R2019b.app/bin/matlab -batch  "OMP_wrapper('./output/09-projection_2/prism_secondary_dict_input.csv', './output/09-projection_2/prism_secondary_signal_input.csv', './output/09-projection_2/prism_secondary_omp_output.csv', 4);exit"
