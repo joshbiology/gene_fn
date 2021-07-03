@@ -141,13 +141,12 @@ generate_webster_params(input_data_path = "/broad/hahnlab2/joshpan/cache/03-depm
                         seed = 1:5) %>% 
   webster_batch_script(cluster,"depmap_deep_batch")
 
-# Sparse coding (OMP) scripts ---------------------------------------------------
+
+#DepMap trained on noisy data.
+list("0", "25", "50", "100", "150") %>% 
+  map_dfr(~generate_webster_params(input_data_path = sprintf("./output/04-depmap_postprocess/avana_19q4_webster_train_noise_%s.csv", .), 
+                                   out_name = sprintf("depmap_denoise_%s", .), out_path = "./data/interim/matlab/depmap_denoise", K_param = 220, T_param = 4, seed = 1:5)) %>% 
+  webster_batch_script(local,"denoise")
 
 
-
-sparse_coding_batch_script <- function() {
-  
-  
-}
-  
 

@@ -109,7 +109,7 @@ pheatmap(final_mat %>% set_colnames(gene_names) %>%
 
 
 # UMAP ---------------------------------------------------------
-umap_out <- umap::umap(final_mat %>% t(), metric = "cosine", n_neighbors = 5)
+umap_out <- umap::umap(final_mat %>% t(), metric = "cosine", n_neighbors = 10, random_state = 123)
 
 
 
@@ -138,8 +138,7 @@ umap_out %>%
   facet_wrap(~Factor) +
   scale_color_viridis_c()
 
-ic <- icasso_ica(final_mat , nbComp = 2)
-
+ic <- icasso_ica(final_mat, nbComp = 2)
 plot(ic$S)
 
 umap_out %>% 
@@ -171,7 +170,7 @@ umap_out %>%
 #Run DGRDL with matlab wrapper. I used the following code:
 #/Applications/MATLAB_R2019b.app/bin/matlab -batch "DGRDL_wrapper('/Users/joshpan/gene_function_dev/output/synthetic_example.csv', 'K', 2, 'T', 2, 'filename_out', '/Users/joshpan/gene_function_dev/data/interim/matlab/synthetic/synthetic-K=2-T=2-n_neigh=1.mat', 'num_neighbor', 1);exit"
 
-#Factorization output
+#Factorization output (patern accepts many files, but we only have one in this folder.)
 mat_paths <- list.files("./data/interim/matlab/synthetic", pattern = "*.mat", full.names = T) %>% unlist()
 
 grid_factorized <- map(mat_paths, function(x) {
@@ -216,7 +215,7 @@ tmp_names <- c("Ground_Truth", "PCA", "ICA", "K_Means", "Webster")
 list(Ground_Truth = dict_mat,
      PCA = pc$x[,1:2] %*% diag(c(-1, -1)),
      ICA = ic$S,
-     K_Means = k_m$centers %>% t() %>% magrittr::extract(,c(2,1)),
+     K_Means = k_m$centers %>% t() %>% magrittr::extract(,c(1,2)), #Depending on the stochasticity of k-means, you might have to flip columns
      Webster = recovered_dictionary) %>% 
   map(function(x) x %>% 
         scale() %>% 
@@ -259,21 +258,3 @@ list(Ground_Truth = code_mat %>% t(),
   scale_color_gradient2(low = "gray90", mid = ("#a184d1"), high = "#00AEEF", limits = c(0, 2), midpoint = 1, oob = scales::squish)  +
   theme_void() +
   ggsave(file.path(out_path, "recovering_gene_manifold_synthetic.pdf"), width = 15, height = 3.5, device= cairo_pdf)
-
-list(Ground_Truth = code_mat %>% t(),
-     ICA = ic$W %>% scale()) %>% 
-  map(~as_tibble(.) %>% mutate(Gene = gene_names)) %>% 
-  enframe() %>% 
-  unnest(value) %>% 
-  set_colnames(c("Dataset", "Function_1", "Function_2", "Gene")) %>% 
-  left_join(
-    umap_out %>% 
-      umap_to_df("Index") %>% 
-      cbind(gene_df)) %>% 
-  pivot_longer(names_to  = "Factor", values_to = "Loadings", c("Function_1", "Function_2")) %>% 
-  ggplot(aes(V2, V1, color = Loadings)) +
-  geom_point(size = 2.5) +
-  facet_grid(Factor~Dataset) +
-  theme_void() +
-  ggsave(file.path(out_path, "recovering_gene_manifold_synthetic_ica.pdf"), width = 15, height = 3.5, device= cairo_pdf)
-

@@ -43,6 +43,41 @@ flip_max_cols <- function(source_mat) {
 }
 
 
+#https://rdrr.io/cran/bigpca/src/R/bigpca.R
+quick.elbow <- function(varpc,low=.08,max.pc=.9) {
+  ee <- varpc/sum(varpc) # ensure sums to 1
+  #print(round(log(ee),3))
+  while(low>=max(ee)) { low <- low/2 } # when no big components, then adjust 'low'
+  lowie <- (ee<low) ; highie <- ee>low/8
+  low.ones <- which(lowie & highie)
+  others <- length(which(!lowie))
+  if(length(low.ones)>0) {
+    if(length(low.ones)==1) {
+      elbow <- low.ones 
+    } else {
+      set <- ee[low.ones]
+      pc.drops <- abs(diff(set))/(set[1:(length(set)-1)])
+      infz <- is.infinite(pc.drops)
+      #print(pc.drops)
+      elbow <- which(pc.drops==max(pc.drops[!infz],na.rm=T))[1]+others
+    }
+  } else { 
+    # if somehow there are no small eigenvalues, just choose the elbow as the second last
+    cat("no eigenvalues were significantly smaller than the previous\n")
+    elbow <- length(ee) 
+  }
+  if(tail(cumsum(ee[1:elbow]),1)>max.pc) {
+    elbow <- which(cumsum(ee)>max.pc)[1]-1
+  }
+  if(elbow<1) {
+    warning("elbow calculation failed, return zero")
+    return(0)
+  }
+  names(elbow) <- NULL
+  return(elbow)
+}
+
+
 # Load genesets --------------------------------------------------------------------
 essential_genes <- read_tsv("./data/raw/avana_v33-essential-genes.tsv")$gene %>% convert_genes("cds_id", "symbol")
 
@@ -88,7 +123,7 @@ stat_df %>%
 ggplot(stat_df, aes(sample = Var)) +
   geom_qq(size = 0.75) +
   geom_hline(yintercept = 3, color = "red") +
-  ggsave(file.path(out_path, "dna_damage_gene_selection.pdf"), width = 4, height = 4)
+  ggsave(file.path(out_path, "genotoxic_gene_selection.png"), width = 4, height = 4)
 
 damage_genes <- stat_df %>%
   filter(Var > 3) %>%
@@ -134,7 +169,9 @@ ggraph(tidy_cl_graph) +
 # Run DGRDL ---------------------------------------------------------------
 
 genotoxic_input <- olivieri_mat[damage_genes,] %>% t()
-ProjectTemplate::cache("genotoxic_input")
+
+#For saving into the cache for use in other scripts:
+#ProjectTemplate::cache("genotoxic_input")
 
 export_for_matlab(olivieri_mat[damage_genes,] %>% t(), "./output/02-genotoxic/durocher_matlab.csv")
 
@@ -231,12 +268,6 @@ webster_genotoxic %>% get_gene_mat() %>%
 
 function_names %>% enframe("Name", "Display_Name") %>% mutate(Name = paste("V", Name, sep = "")) %>% 
   write_tsv(file.path(".", "output", "portal_assets", "durocher_fn_display_name.tsv"))
-
-
-
-# Geneset enrichment ------------------------------------------------------
-
-
 
 
 # Plots -------------------------------------------------------------------
@@ -488,5 +519,99 @@ plot_pleiotropy_network <- function(fns, pathway_name) {
 mock_rad51b <- genotoxic_input[,"H2AFX"]/norm(genotoxic_input[,"H2AFX"], type = "2") - get_cell_mat(webster_genotoxic)[,7] + get_cell_mat(webster_genotoxic)[,8]
 cor(mock_rad51b, genotoxic_input[,"RAD51B"])
 
+qplot(genotoxic_input[,"RAD51B"], genotoxic_input[,"H2AFX"], ) +
+  labs(y = "Measured H2AFX fitness", x = "Measured RAD51B fitness") + 
+  ggsave(file.path(out_path, "rad51_measured.pdf"), width = 4, height = 4, device = cairo_pdf)
+
+qplot(genotoxic_input[,"RAD51B"], mock_rad51b) +
+  labs( x = "Measured RAD51B fitness", y = "Measured H2AFX - End Joining + Fanconi Anemia")  + 
+  ggsave(file.path(out_path, "rad51_artificial.pdf"), width = 4, height = 4, device = cairo_pdf)
+
 #heatmaps
+
+
+# Run other factorizations ------------------------------------------------
+
+#PCA
+pc <- prcomp(genotoxic_input %>% t())
+pc_dim <- quick.elbow(pc$sdev^2)
+
+plot(pc, type = "lines", npcs = 31)
+
+pca_factor <- pca_to_factorized(pc, pc_dim)
+
+
+#ICA
+K_param<- seq(2, 30, 1)
+
+#Make genes the S matrix so that the non-Gaussianiity is imposed on the profiles over cell line measurements
+ics <- purrr::map(K_param, ~icasso_ica(olivieri_mat[damage_genes,],nbComp=., alg.type="deflation", nbIt=20,
+                                       funClus="hclust", method="average"))
+
+mstd_df <- purrr::map(ics, ~.$Iq %>% as.data.frame() %>% 
+                        set_colnames("Stability") %>% 
+                        mutate(IC = row_number())) %>% 
+  set_names(K_param) %>% 
+  enframe("Rank") %>%
+  mutate(Rank = as.numeric(Rank)) %>% 
+  unnest(value) 
+
+mstd_df %>% 
+  ggplot(aes(IC, Stability, group = Rank, color = Rank)) +
+  geom_line() +
+  geom_point() +
+  ylim(c(0, 1)) +
+  scale_color_viridis_c() +
+  ggtitle("MSTD plot for Durocher ICA") +
+  geom_vline(xintercept = 13, color = "red", linetype = "dashed") +
+  ggsave(file.path(out_path, "mstd_durocher.pdf"), width = 5, height = 4)
+
+ica_factor <- fastICA_to_factorized(ics[[which(K_param == 10)]]) 
+
+
+
+# Perform geneset operations ----------------------------------------------
+
+one_hot_mat <- olivieri_genes %>% 
+  filter(Pathway != "HIPPO", Pathway != "OTHER") %>% 
+  mutate(Is_Pathway = T) %>% 
+  pivot_wider(names_from = "Pathway", values_from = "Is_Pathway", values_fill = F) %>% 
+  column_to_rownames("Gene") %>% 
+  as.matrix() %>% 
+  "*"(1) #trick to convert logical to numeric
+
+
+plot_roc_over_loadings <- function(factor_obj) {
+  gene_loadings <- factor_obj %>% 
+    get_gene_mat() %>% 
+    as_tibble(rownames = "Gene") %>% 
+    pivot_longer(names_to = "Factor", values_to = "Loading", -Gene)
+  
+  out <- map_dfr(1:ncol(one_hot_mat), function(x) {
+    gene_loadings %>% 
+      inner_join(one_hot_mat[,x] %>% enframe("Gene", "Truth")) %>% 
+      mutate(Truth = factor(Truth)) %>% 
+      group_by(Factor) %>% 
+      yardstick::roc_auc(Truth, Loading, event_level = "second")}, .id = "Index")   #https://yardstick.tidymodels.org/
+
+  out %>% 
+    left_join(tibble(Index = 1:ncol(one_hot_mat) %>% as.character, Name = colnames(one_hot_mat))) %>% 
+    ggplot(aes(x = Name, y = .estimate, color = Factor)) +
+    geom_hline(yintercept = 0.5, linetype='dotted') +
+    geom_point() +
+    ylim(c(0, 1)) +
+    theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+  
+    
+}
+
+plot_roc_over_loadings(webster_genotoxic) +
+  ggsave(file.path(out_path, "roc_geneset_webster.pdf"), width = 4, height = 4, device = cairo_pdf)
+
+plot_roc_over_loadings(pca_factor) +
+  ggsave(file.path(out_path, "roc_geneset_pca.pdf"), width = 4, height = 4, device = cairo_pdf)
+
+plot_roc_over_loadings(ica_factor) +
+  ggsave(file.path(out_path, "roc_geneset_ica.pdf"), width = 4, height = 4, device = cairo_pdf)
+
 

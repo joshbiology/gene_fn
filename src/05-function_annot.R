@@ -158,4 +158,79 @@ factor_gost_results %>%
 
 # Number of pleiotropic genes ---------------------------------------------
 
+threshold <- 0.25
+loadings_df <- webster_depmap %>%
+  get_gene_mat_stdev() %>% 
+  as_tibble(rownames=  "Gene") %>% 
+  pivot_longer(names_to = "Function", values_to = "Loading", -Gene) %>% 
+  filter(abs(Loading) > threshold) %>% 
+  arrange(Gene, Function) 
+
+pleiop_gene_count <-loadings_df %>% count(Gene) %>% 
+  left_join(gene_recon_webster)
+
+
+(pleiop_gene_count %>% filter(n != 1) %>% nrow())/(nrow(pleiop_gene_count))
+
+factor_pleiotrop_df <- loadings_df %>% 
+  left_join(loadings_df, by = "Gene") %>% 
+  filter(Function.x != Function.y, Function.x < Function.y) %>% 
+  left_join(gene_recon_webster) %>% 
+  filter(Recon_Pearson > 0.4)
+
+factor_pleiotrop_df %>% 
+  count(Gene) %>% View()
+nrow(factor_pleiotrop_df)
+
+plot_pleiotropy_network <- function(fns, pathway_name) {
+  require(igraph)
+  require(tidygraph)
+  require(ggraph)
+  tmp_graph <- as_tbl_graph(igraph::graph_from_data_frame(factor_pleiotrop_df %>% 
+                                                            filter(Function.x %in% fns & Function.y%in% fns) %>%
+                                                            count(Function.x, Function.y) %>% 
+                                                            arrange(desc(n)), directed = F))
+  
+  ggraph(tmp_graph, layout = "circle") + 
+    geom_edge_link(color = "gray90", alpha = 1, aes(edge_width = n)) + 
+    geom_node_text(aes(label = name), size = 5, color = "black") +
+    geom_node_point(size = 2.5, color = "black")
+  
+}
+
+
+
+# Biomarker ---------------------------------------------------------------
+#Plot bargraphs of Omics associations.
+
+
+source("./munge/biomarker.R")
+
+plot_biomarkers <- function(index, trim_length = 55) {
+  
+  biom_df <- fn_models %>% 
+    filter(gene == paste("V", index, sep = "")) %>% 
+    mutate(Feature_Name = str_sub(Feature_Name, 1, trim_length)) %>% 
+    mutate(Feature_Name = tidytext::reorder_within(Feature_Name, importance, model))
+  
+  labels <- biom_df %>% 
+    group_by(model) %>% 
+    summarize(Label = paste("Pearson =", max(pearson) %>% round(digits = 2)))
+    
+  biom_df %>% 
+    ggplot(aes(Feature_Name, importance)) +
+    geom_col(aes(fill = Type)) +
+    tidytext::scale_x_reordered() +
+    coord_flip() +
+    facet_wrap(~model, scales = "free") +
+    geom_text(data = labels, aes(label = Label, x = -Inf, y = -Inf), vjust = -1, hjust=-1) +
+    ggtitle(paste("V", index, sep = "")) +
+    ggsave(file.path(out_path, paste("biomarker_", index, "_", "scores", ".pdf", sep = "")), width = 15, height = 8, device= cairo_pdf)
+}
+
+walk(1:webster_depmap$rank, plot_biomarkers)
+
+
+# Protein complex modularity ----------------------------------------------
+
 

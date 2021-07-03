@@ -39,6 +39,12 @@ gene_loadings <- webster_depmap %>%
 
 write_tsv(gene_loadings, file.path(out_path, "depmap_gene_to_function.tsv"))
 
+gene_loadings_stdev <- webster_depmap %>% 
+  get_gene_mat_stdev () %>% 
+  set_colnames(paste("V", 1:webster_depmap$rank, sep = "")) %>% 
+  as_tibble(rownames = "Name") 
+
+write_tsv(gene_loadings_stdev, file.path(out_path, "depmap_gene_to_function_stdev.tsv"))
 
 # Depmap small multiples --------------------------------------------------
 gene_loadings_df <- gene_loadings %>% 
@@ -79,16 +85,18 @@ bioid_card <- bioid_loc %>%
 #https://www.genecards.org/Guide/AboutGeneCards
 #https://www.ncbi.nlm.nih.gov/gene/
 depmap_gene_urls <- tibble(Name = avana_19q4_webster %>% colnames(),
-                    DepMap_URL = map_chr(Name, function(x) sprintf("https://depmap.org/portal/gene/%s?tab=overview", convert_cds_to_symbol(x))),
-                    GeneCard_URL = map_chr(Name, function(x) sprintf("https://www.genecards.org/cgi-bin/carddisp.pl?gene=%s", convert_cds_to_symbol(x))),
-                    NIH_Gene_URL = map_chr(Name, function(x) sprintf("https://www.ncbi.nlm.nih.gov/gene/?term=%s", convert_cds_to_entrez(x)))) 
+                           Location_URL =  map_chr(Name, function(x) sprintf("https://humancellmap.org/explore/reports/prey?id=%s", convert_cds_to_symbol(x))),
+                           DepMap_URL = map_chr(Name, function(x) sprintf("https://depmap.org/portal/gene/%s?tab=overview", convert_cds_to_symbol(x))),
+                           GeneCard_URL = map_chr(Name, function(x) sprintf("https://www.genecards.org/cgi-bin/carddisp.pl?gene=%s", convert_cds_to_symbol(x))),
+                           NIH_Gene_URL = map_chr(Name, function(x) sprintf("https://www.ncbi.nlm.nih.gov/gene/?term=%s", convert_cds_to_entrez(x)))) 
 
 
 # Reconstruction score
 gene_recon_webster
 
 #Loadings
-depmap_loading_fn_card <- gene_loadings_df %>% 
+depmap_loading_fn_card <- gene_loadings_stdev %>% 
+  pivot_longer(names_to = "Function", values_to = "Loading", starts_with("V")) %>% 
   filter(Loading != 0) %>% 
   group_by(Name) %>% 
   arrange(Name, desc(abs(Loading))) %>% 
@@ -101,6 +109,15 @@ depmap_gene_meta <- depmap_loading_fn_card %>%
   left_join(gene_recon_webster %>% rename("Name" = "Gene")) %>% 
   left_join(bioid_card) %>% 
   left_join(depmap_gene_urls)
+
+
+tmp <- is.na(depmap_gene_meta$Location)
+tmp2 <- depmap_gene_meta$Location_URL
+tmp2[tmp] <- NA
+
+depmap_gene_meta <- depmap_gene_meta %>% 
+  mutate(Location_URL = tmp2)
+
 
 write_tsv(depmap_gene_meta, file.path(out_path, "depmap_gene_meta.tsv"))
 
@@ -184,10 +201,22 @@ get_cell_mat(webster_depmap) %>%
 
 
 # Durocher ----------------------------------------------------------------
+#Durocher loadings
+source('./munge/webster_genotoxic.R')
+
+
+durocher_loadings_stdev <- webster_genotoxic %>% 
+  get_gene_mat_stdev () %>% 
+  as_tibble(rownames = "Name") 
+
+write_tsv(durocher_loadings_stdev, file.path(out_path, "durocher_gene_to_function_stdev.tsv"))
+
 
 # Durocher gene metadata ----------------------------------------------------------------
 
-durocher_g2f <- read_tsv("./output/portal_assets/durocher_gene_to_function.tsv") %>% 
+durocher_g2f <- webster_genotoxic %>%
+  get_gene_mat_stdev() %>% 
+  as_tibble(rownames = "Name") %>% 
   pivot_longer(names_to = "Function", values_to = "Loading", -Name) %>% 
   filter(Loading != 0) %>% 
   group_by(Name) %>% 
@@ -204,7 +233,8 @@ olivieri_genes <- read_excel("./data/raw/durocher/cell/mmc4-2.xlsx", sheet = 1, 
   summarize(Literature_Pathway = paste(Literature_Pathway, collapse = "; "))
 
 durocher_gene_urls <- tibble(Name = durocher_g2f %>% pull(Name),
-                           GeneCard_URL = map_chr(Name, function(x) sprintf("https://www.genecards.org/cgi-bin/carddisp.pl?gene=%s", x)))
+                           GeneCard_URL = map_chr(Name, function(x) sprintf("https://www.genecards.org/cgi-bin/carddisp.pl?gene=%s", x)),
+                           NIH_Gene_URL = map_chr(Name, function(x) sprintf("https://www.ncbi.nlm.nih.gov/gene/?term=%s", convert_genes_mygeneinfo(x, "entrezgene"))))
 
 durocher_gene_meta <- durocher_g2f %>% 
   left_join(durocher_recon) %>% 
