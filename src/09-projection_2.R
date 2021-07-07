@@ -55,6 +55,9 @@ prism_primary_imputed <- impute_prism_na(pri_tmp)
 
 ProjectTemplate::cache("prism_primary_imputed")
 
+#For reproducibility:
+#load("./cache/prism_primary_imputed.Rdata")
+
 #Calculate statitics
 primary_compound_stats_df <- tibble(column_name = colnames(prism_primary_imputed),
                                     Var = matrixStats::colVars(prism_primary_imputed),
@@ -252,19 +255,25 @@ compound_layout <- predict(depmap_umap, compound_imputed[, successful_cmpds] %>%
 #Visualize
 impute_df <- depmap_umap$layout %>% rbind(compound_layout) %>% 
   as_tibble(rownames = "Name") %>% 
-  mutate(Type = c(rep("Factor", webster_depmap$rank), rep("Gene", dim(avana_19q4_webster)[2]), rep("Compound", length(successful_cmpds) ))) %>% 
+  mutate(Type = c(rep("Function", webster_depmap$rank), rep("Gene", dim(avana_19q4_webster)[2]), rep("Compound", length(successful_cmpds) ))) %>% 
   mutate(Gene_Name = convert_genes(Name, from = "entrez_id", "symbol")) %>% 
-  rename(X = V1, Y = V2)
+  rename(X = V1, Y = V2) %>% 
+  mutate(Y = -Y)  %>% 
+  left_join(primary_compound_filtered_meta, by = c("Name" = "column_name")) %>% 
+  mutate(moa_umap  =factor(moa_umap))
 
 g_combo <- impute_df %>% 
-  left_join(primary_compound_filtered_meta, by = c("Name" = "column_name")) %>% 
-  ggplot(aes(X, Y, label = name)) + 
-  geom_point(data = subset(impute_df, Type == "Gene"), size = 0.5, alpha = 0.2, color = "gray50") +
-  geom_point(data = subset(impute_df, Type == "Factor"),size = 1, shape = 17, alpha = 0.5) +
+  ggplot(aes(X, Y, label = paste(Name, name))) + 
+  geom_point(data = subset(impute_df, Type == "Gene"), size = 0.5, alpha = 0.2, color = "gray70") +
+  geom_point(data = subset(impute_df, Type == "Function"),size = 1, shape = 17, alpha = 0.5) +
   geom_point(data = subset(impute_df, Type == "Compound"),size = 2, shape = 18,aes(color = moa_umap)) +
   theme_void()
 
 plotly::ggplotly(g_combo)
+
+
+g_combo +
+  ggsave(file.path(out_path, "compound_embedding.pdf"), width = 5.5, height = 4, device = cairo_pdf)
 
 g2 <- impute_df %>% 
   ggplot(aes(X, Y)) + 
@@ -274,7 +283,84 @@ g2 <- impute_df %>%
   scale_color_viridis_c(option = "magma")
 
 plotly::ggplotly(g2)
+
+
+
+
+# Focus insets ------------------------------------------------------------
+
+#Copied from 08-landscape.R
+plotting_window <- function(fn_names, nudge = 0.3) {
   
+  tmp <- impute_df %>% filter(Name %in% fn_names)
+  window_x <- c(min(tmp$X)-nudge, max(tmp$X)+nudge)
+  window_y <- c(min(tmp$Y)-nudge, max(tmp$Y)+nudge)
+  impute_df %>% 
+    filter(X > window_x[1], X < window_x[2], Y > window_y[1], Y < window_y[2])
+}
+
+plot_fn_panel <- function(df) {
+  df %>% 
+    ggplot(aes(X, Y, label = Name)) + 
+    geom_point(data = subset(df, Type == "Gene"), size = 0.5, alpha = 0.5, color = "gray70") +
+    geom_point(data = subset(df, Type == "Function"),size = 1, shape = 17, alpha = 0.5) +
+    geom_point(data = subset(df, Type == "Compound"),size = 2, shape = 18,aes(color = moa_umap)) +
+    geom_text(data = df %>% filter(Type == "Function"),  nudge_y = .05) +
+    scale_colour_hue(drop=FALSE) + 
+    scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +
+    theme_void() +
+    theme(legend.position = "none") 
+}
+
+
+plotting_window(c("V15"), 0.1) %>% plot_fn_panel +
+  ggsave(file.path(out_path, "braf.pdf"), width = 1.5, height = 1.5, device = cairo_pdf)
+
+plotting_window(c("V151", "BRD-K69726342-238-02-4::2.5::HTS", "BRD-K94441233-001-13-0::2.6::HTS", "BRD-K94441233-001-17-1::2.5::HTS", "BRD-K22134346-001-24-9::2.42::HTS"), 0.1) %>% plot_fn_panel +
+  ggsave(file.path(out_path, "statin.pdf"), width = 1.5, height = 1.5, device = cairo_pdf)
+
+plotting_window(c("V109", "BRD-K44665581-001-01-8::2.5::HTS"), 0.3) %>% plot_fn_panel +
+  ggsave(file.path(out_path, "brom.pdf"), width = 1.5, height = 1.5, device = cairo_pdf)
+
+plotting_window(c("V82"), 0.15) %>% plot_fn_panel +
+  ggsave(file.path(out_path, "egfr.pdf"), width = 1.5, height = 1.5, device = cairo_pdf)
+
+
+# Compound to function heatmaps -------------------------------------------
+
+
+
+plot_compound_loadings <- function(index, max_loading = F) {
+  cmpd_df <- prism_primary_omp[,index] %>% #converting euclidean to stdev
+    enframe("column_name", "Loadings")
+  
+  cmpd_df <- cmpd_df %>% 
+    mutate(Rank = order(order(Loadings, decreasing = T))) %>% 
+    arrange(desc(Loadings)) %>% 
+    filter(Rank <= 10) %>% 
+    left_join(prism_umap_annot %>% group_by(column_name) %>% filter(row_number()==1) %>% ungroup)
+  
+  loading_mat <- prism_primary_omp[cmpd_df$column_name,index] %>% matrix(ncol = 1) %>% 
+    set_rownames(cmpd_df$column_name)
+  
+  loading_mat <- loading_mat/sqrt(367) #converting euclidean to stdev
+  
+  if (max_loading == F) {
+    max_loading <- max(abs(loading_mat))
+  }
+  
+  g2 <- pheatmap::pheatmap(loading_mat, cluster_cols = F, cluster_rows = F, show_colnames = F, 
+                           annotation_row = cmpd_df %>% select(column_name, moa_umap) %>% column_to_rownames("column_name"),
+                           labels_row = cmpd_df$name,
+                           filename =  file.path(out_path, paste("cmpd_loading_", index, ".pdf", sep = "")),
+                           cellwidth =20, cellheight = 20, color = colorRampPalette(c("#BF812D", "white", "#00AEEF"))(100), 
+                           breaks = seq(-max_loading, max_loading, length.out=101))
+}
+
+plot_compound_loadings(151)
+plot_compound_loadings(15)
+plot_compound_loadings(82)
+plot_compound_loadings(109)
 
 # Secondary screen --------------------------------------------------------
 
@@ -299,7 +385,8 @@ prism_secondary_tmp <- prism_secondary_lfc[,secondary_meta$column_name]
 prism_secondary_imputed <- impute_prism_na(prism_secondary_tmp)
 ProjectTemplate::cache("prism_secondary_imputed")
 
-
+#For reproducibility:
+#load('./cache/prism_secondary_imputed.RData')
 # Prepare PRISM matrix with CRISPR dictionary ------------------------------------
 secondary_common_cl <- intersect(primary_common_cl, rownames(prism_secondary_imputed))
 
@@ -427,15 +514,28 @@ impute_df %>%
 
 # Plot individual loadings per dose ---------------------------------------
 
-plot_loadings_by_dose <- function(moa_focus, fn) {
+plot_loadings_by_dose <- function(moa_focus, fn, number_of_facets = 3) {
   tmp <- proj_results_secondary %>% 
-    inner_join(prism_secondary_omp %>% as_tibble(rownames = "column_name")) %>% 
+    inner_join((prism_secondary_omp/sqrt(325)) %>% as_tibble(rownames = "column_name")) %>% 
     left_join(secondary_meta)
   
-  tmp %>% 
+  high_loaded_names <- tmp %>% 
     filter(moa == moa_focus) %>% 
+    group_by(name) %>% 
+    rename(Focus = sym(fn)) %>% 
+    summarize(Max_Loading = max(Focus)) %>% 
+    arrange(desc(Max_Loading)) %>% 
+    slice(1:number_of_facets) %>% 
+    pull(name)
+  
+  dose_df <- tmp %>% 
+    filter(name %in% high_loaded_names) %>% 
     pivot_longer(names_to = "Mode", values_to = "Value", c(sym(fn), "Median")) %>% 
-    mutate(Mode = factor(Mode, levels = c(sym(fn), "Median"))) %>% 
+    mutate(Mode = factor(Mode, levels = c(sym(fn), "Median")))
+  
+
+  
+  dose_df %>% 
     ggplot(aes(log(dose,2), Value, color)) +
     geom_point(aes(color = Mode), size = 0.5) +
     geom_col(width = 0.3, aes(fill = Mode)) +
@@ -452,16 +552,26 @@ plot_loadings_by_dose("AKT inhibitor", "V61")
 
 plot_loadings_by_dose("RAF inhibitor", "V15")
 
-plot_loadings_by_dose("HMGCR inhibitor", "V151")
-
-plot_loadings_by_dose("MDM inhibitor", "V5")
+plot_loadings_by_dose("HMGCR inhibitor", "V151", 4) +
+  ggsave(file.path(out_path, "hmgcr_secondary.pdf"), width = 7, height = 3, device = cairo_pdf)
+ 
+plot_loadings_by_dose("MDM inhibitor", "V5", 2) +
+  ggsave(file.path(out_path, "mdm_secondary.pdf"), width = 3.5, height = 3, device = cairo_pdf)
 
 plot_loadings_by_dose("MEK inhibitor", "V138")
+
 plot_loadings_by_dose("MEK inhibitor", "V15")
 
-plot_loadings_by_dose("EGFR inhibitor", "V82")
+plot_loadings_by_dose("MEK inhibitor", "V82", 4) +
+  ggsave(file.path(out_path, "meki_secondary.pdf"), width = 7, height = 3, device = cairo_pdf)
 
-plot_loadings_by_dose("bromodomain inhibitor", "V82")
+
+
+plot_loadings_by_dose("EGFR inhibitor", "V82", 4) +
+  ggsave(file.path(out_path, "egfr_secondary.pdf"), width = 7, height = 3, device = cairo_pdf)
+
+plot_loadings_by_dose("bromodomain inhibitor", "V109", 2) +
+  ggsave(file.path(out_path, "bromo_secondary.pdf"), width = 3.5, height = 3, device = cairo_pdf)
 
 
 # Recon -------------------------------------------------------------------

@@ -56,7 +56,7 @@ walk(1:webster_depmap$rank, function(x){
   
   tmp_df <-   plotting_df %>% 
     left_join(gene_loadings_df) %>% 
-    filter(Factor == factor_name | Name == factor_name) 
+    filter(Function == factor_name | Name == factor_name) 
   
   tmp_df %>% 
     ggplot(aes(X, Y, color = Loading, shape = Type)) +

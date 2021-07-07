@@ -11,11 +11,12 @@ webster_depmap <- graphdl_to_factorized(import_graphdl(R.matlab::readMat(mat_pat
 
 # Flip axes consistently --------------------------------------------------
 
-#Webster solutions are oblivious to sign. However, some of the nearest neighbor relationships in the UMAP
-#only make sense in the correct orientation. (I.e. your factor is flipped relative to the gene sign)
-#In practice, I find it best to flip them so that the highest loadest gene is positive. There are a few I found that I keep as is.
+#Webster solutions are sign invariant. In practice, tend to flip them so that the highest loadest gene is positive.
 
 direction <- abs(matrixStats::colMaxs(get_gene_mat(webster_depmap))) - abs(matrixStats::colMins(get_gene_mat(webster_depmap)))
+
+#Flip axis of ATAC factor for positive loadings.
+direction[196] <- -direction[196] 
 
 direction_mat <- diag(direction/abs(direction))
 

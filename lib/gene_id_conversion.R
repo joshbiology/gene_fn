@@ -37,6 +37,11 @@ convert_cds_to_symbol <- function(genes) {
   str_split(genes, " ", simplify = T)[,1]
 }
 
+symbol_to_cds <- function(genes) {
+  #quick common helper
+  convert_genes(genes, "symbol", "cds_id")
+}
+
 convert_genes_mygeneinfo <- function(genes, to = c("entrezgene", "symbol")) {
   to <- match.arg(to)
   
