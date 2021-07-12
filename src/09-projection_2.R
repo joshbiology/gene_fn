@@ -189,10 +189,16 @@ proj_results <- tibble(column_name = colnames(recon_prism),
 
 proj_results %>% 
   left_join(primary_compound_filtered_meta) %>% 
-  ggplot(aes(reorder(group, Pearson, FUN = median), Pearson)) +
+  ggplot(aes(reorder(group, Pearson, FUN = median), Pearson, fill = reorder(group, Pearson, FUN = median))) +
   geom_boxplot() + coord_flip() +
-  ggsave(file.path(out_path, "primary_pearson_recon.pdf"), width = 7, height = 7)
+  theme(legend.position = "none") +
+  ggsave(file.path(out_path, "primary_pearson_recon.pdf"), width = 7, height = 4, device = cairo_pdf)
 
+proj_results %>% 
+  left_join(primary_compound_filtered_meta) %>% 
+  ggplot(aes(Median, Pearson, color = reorder(group, Pearson, FUN = median))) +
+  geom_point() +
+  geom_smooth(method = "lm")
 
 # Plot loadings -----------------------------------------------------------
 plot_moa_loadings <- function(selected_group) {

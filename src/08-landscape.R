@@ -53,6 +53,9 @@ plotting_df <- depmap_umap$layout %>%
 
 ProjectTemplate::cache("plotting_df")
 
+#For reproducibility:
+#load("./cache/plotting_df.RData")
+
 write_tsv(plotting_df, path = file.path(out_path, "depmap_embedding.tsv"))
 
 # Individual plots --------------------------------------------------------
@@ -251,6 +254,26 @@ g1 <- loc_plot_df %>%
   theme_void()
 
 plotly::ggplotly(g1)
+
+
+# Plotting embedding without genes ---------------------------------------
+
+
+fns_only <- umap::umap(webster_depmap %>% get_cell_mat %>% t(),  metric = 'pearson', n_neighbors = 10, random_state =1.1)
+
+g3 <- fns_only %>% 
+  umap_to_df("Name") %>% 
+  left_join(max_nmf_df) %>% 
+  left_join(bioid_colors) %>% 
+  ggplot(aes(V1, V2, color = Color, alpha = Specificity, label=Name)) +
+  geom_point(shape = 17) +
+  scale_color_identity() +
+  scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +theme_void()
+
+
+g3 +
+  ggsave(file.path(out_path, "fn_only.pdf"), width = 3, height = 2)
+plotly::ggplotly(g3)
 
 # Functions for Plotting frames ---------------------------------------------------------
 
