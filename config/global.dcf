@@ -8,7 +8,7 @@ munging: FALSE
 logging: FALSE
 logging_level: INFO
 load_libraries: TRUE
-libraries:  reshape2, plyr, readxl, magrittr, ff, taigr, umap,
+libraries:  reshape2, plyr, readxl, magrittr, ff, umap,
         tidyverse
 as_factors: FALSE
 attach_internal_libraries: FALSE

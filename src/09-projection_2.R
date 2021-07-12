@@ -198,13 +198,13 @@ proj_results %>%
   left_join(primary_compound_filtered_meta) %>% 
   ggplot(aes(Median, Pearson, color = reorder(group, Pearson, FUN = median))) +
   geom_point() +
-  geom_smooth(method = "lm")
+  ggsave(file.path(out_path, "primary_pearson_recon_scatter.pdf"), width = 8, height = 4, device = cairo_pdf)
 
 # Plot loadings -----------------------------------------------------------
 plot_moa_loadings <- function(selected_group) {
   selected_compounds <- primary_compound_filtered_meta %>% dplyr::filter(group == selected_group) %>% pull(column_name)
   
-  tmp_omp <- prism_primary_omp[selected_compounds,]
+  tmp_omp <- prism_primary_omp[selected_compounds,]/sqrt(365)
   
   
   selected_fns <- colSums(tmp_omp != 0) %>% 
@@ -224,13 +224,14 @@ plot_moa_loadings <- function(selected_group) {
   pheatmap::pheatmap(tmp_omp[,selected_fns], show_rownames = F, cluster_rows = F, cluster_cols = F, clustering_method = "ward.D2", fontsize_col = 7.5,
                      annotation_row = annot,
                      color = colorRampPalette(c("#BF812D", "white", "#00AEEF"))(100), main = selected_group, display_numbers = show_numbers, number_format = "%.0f",
-                     breaks = seq(-10, 10, length.out=101), filename = file.path(out_path, paste(selected_group, "loading_heatmap.pdf", sep = "_")))
+                     breaks = seq(-0.5, 0.5, length.out=101), filename = file.path(out_path, paste(selected_group, "loading_heatmap.pdf", sep = "_")))
   
 }
 
 walk(primary_compound_filtered_meta$group %>% unique() %>% setdiff(c("HIF PROLYL HYDROXYLASE", "RET TYROSINE KINASE INHIBITOR")), plot_moa_loadings)
 
 
+plot_moa_loadings("RAF INHIBITOR")
 plot_moa_loadings("RAF INHIBITOR")
 
 
