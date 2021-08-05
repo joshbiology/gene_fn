@@ -515,6 +515,9 @@ plot_pleiotropy_network <- function(fns, pathway_name) {
 
 }
 
+
+
+
 # Interpolation -----------------------------------------------------------
 mock_rad51b <- genotoxic_input[,"H2AFX"]/norm(genotoxic_input[,"H2AFX"], type = "2") - get_cell_mat(webster_genotoxic)[,7] + get_cell_mat(webster_genotoxic)[,8]
 cor(mock_rad51b, genotoxic_input[,"RAD51B"])

@@ -11,12 +11,9 @@
 #8. Depmap matrices - for biomarker pipeline.
 
 # Depmap ------------------------------------------------------------------
-
-
 library(ProjectTemplate); load.project()
 
 out_path <- file.path(".", "output", "portal_assets")
-
 
 #Depmap
 load("./cache/avana_19q4_webster.RData")
@@ -152,7 +149,7 @@ depmap_loc_meta <- max_nmf_df %>%
   arrange(Compartment,desc(Specificity), Location) %>% 
   filter(Specificity > 0.33) %>% 
   slice(1:15) %>% 
-  ungroup() %>% 
+  ungroup() 
   
 
 
@@ -194,11 +191,6 @@ avana_19q4_webster %>%
 get_cell_mat(webster_depmap) %>% 
   as_tibble(rownames = "Cell_Line") %>% 
   write_csv(file.path(out_path, paste(Sys.Date(), "dictionary_matrix_19q4_webster.csv", sep = "_")))
-
-
-
-
-
 
 # Durocher ----------------------------------------------------------------
 #Durocher loadings
@@ -244,9 +236,9 @@ durocher_gene_meta <- durocher_g2f %>%
 write_tsv(durocher_gene_meta, file.path(out_path, "durocher_gene_meta.tsv"))
 
 # Durocher fn metadata ----------------------------------------------------------------
-#durocher_cell_mat <- $
-  
-durocher_fn_top <- read_tsv("./output/portal_assets/durocher_cell_mat.tsv") %>% 
+
+durocher_fn_top <- get_cell_mat(webster_genotoxic) %>% t() %>% 
+  as_tibble(rownames= "Name") %>% 
   pivot_longer(names_to = "Treatment", values_to = "Dependency", -Name) %>% 
   group_by(Name) %>% 
   arrange(Name, desc(abs(Dependency))) %>% 

@@ -146,7 +146,7 @@ factor_gost_results %>%
          Loaded_Genes = factor_genes %>% map_chr(paste, collapse = " "))%>% 
   select(Name, Frac_Essential, Loaded_Genes,everything()) %>% 
   select(-parents) %>% 
-  write_tsv(file.path(out_path, "fn_annot.tsv"))
+  write_tsv(file.path(out_path, "depmap_fn_annot_gprofiler.tsv"))
 
 
 
@@ -178,11 +178,9 @@ factor_pleiotrop_df <- loadings_df %>%
   left_join(gene_recon_webster) %>% 
   filter(Recon_Pearson > 0.4)
 
-factor_pleiotrop_df %>% 
-  count(Gene) %>% View()
 nrow(factor_pleiotrop_df)
 
-plot_pleiotropy_network <- function(fns, pathway_name) {
+plot_pleiotropy_network <- function(fns) {
   require(igraph)
   require(tidygraph)
   require(ggraph)
@@ -198,6 +196,26 @@ plot_pleiotropy_network <- function(fns, pathway_name) {
   
 }
 
+#Shoc2 function selection
+factor_pleiotrop_df %>% select(Function.x, Function.y) %>% 
+  count(Function.x, Function.y) %>% 
+  filter(Function.x %in% c("V138", "V209", "V162", "V8") | Function.y %in% c("V138", "V209", "V162", "V8")) %>% View()
+
+#SHOC2
+plot_pleiotropy_network(c("V138", "V209", "V162", "V8", "V215", "V6", "V15")) +
+  ggsave(file.path(out_path, "shoc2_pleiop.pdf"), width = 4, height = 3.5, device = cairo_pdf)
+
+#Sterol
+plot_pleiotropy_network(c("V51", "V30")) +
+  ggsave(file.path(out_path, "sterol_pleiop.pdf"), width = 4, height = 3.5, device = cairo_pdf)
+
+#retro
+plot_pleiotropy_network(c("V17", "V169", "V11")) +
+  ggsave(file.path(out_path, "retro_pleiop.pdf"), width = 4, height = 3.5, device = cairo_pdf)
+
+#scar
+plot_pleiotropy_network(c("V52", "V6", "V34")) +
+  ggsave(file.path(out_path, "scar_pleiop.pdf"), width = 4, height = 3.5, device = cairo_pdf)
 
 
 # Biomarker ---------------------------------------------------------------
@@ -229,8 +247,3 @@ plot_biomarkers <- function(index, trim_length = 55) {
 }
 
 walk(1:webster_depmap$rank, plot_biomarkers)
-
-
-# Protein complex modularity ----------------------------------------------
-
-

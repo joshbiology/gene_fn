@@ -166,6 +166,8 @@ tictoc::toc()
 
 write_tsv(depmap_deep_metrics_df, path = file.path(out_path, "depmap_deep_metrics.tsv"))
 
+#For reproducibility:
+#depmap_deep_metrics_df <- read_tsv(file.path(out_path, "depmap_deep_metrics.tsv"))
 depmap_deep_metrics_df %>% 
   pivot_longer(names_to = "Metric", values_to = "Value", c(F_Norm, Gene_Lap)) %>% 
   ggplot(aes(x = K, y = Value)) +
@@ -190,6 +192,28 @@ grouped_metrics %>%
   ggsave(file.path(out_path,"depmap_deep_marginal_metrics_T=4.pdf"), width = 6, height = 10, device = cairo_pdf)
 
 
+#Consistency between dictionary atom runs.
+random_seed_crosscor <- cor(depmap_deep_output[[71]]$cell_mat, depmap_deep_output[[72]]$cell_mat)
+
+init_final_dict_crosscor <- cor(avana_19q4_webster[, attr(depmap_deep_output[[71]], "extras")$medoids[,1]], depmap_deep_output[[71]]$cell_mat)
+
+pheatmap::pheatmap(tmp, cluster_cols = F, cluster_rows = F, breaks = seq(-1,1, length.out = 100))
+pheatmap::pheatmap(tmp2, cluster_cols = F, cluster_rows = F, breaks = seq(-1, 1, length.out = 100), show_rownames = F)
+
+#Print medoids names
+colnames(avana_19q4_webster)[attr(depmap_deep_output[[71]], "extras")$medoids[,1]]
+
+tibble(Init_Final = init_final_dict_crosscor %>% diag(),
+       Random_Seed = random_seed_crosscor%>% diag()) %>% 
+  pivot_longer(names_to = "Type", values_to = "Cross_Cor", everything()) %>% 
+  ggplot(aes(Cross_Cor)) +
+  geom_histogram() +
+  facet_wrap(~Type) +
+  ggsave(file.path(out_path, "consistency_hist.pdf"), width = 4, height = 1.5)
+
+
+median(random_seed_crosscor %>% diag)
+median(init_final_dict_crosscor %>% diag)
 
 # Inidividual gene examination -------------------------------------------------------
 #returns the genes and columns invovled.

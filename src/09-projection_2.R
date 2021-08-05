@@ -182,6 +182,8 @@ prism_primary_omp <- read_csv(prism_primary_omp_file, col_names = F) %>%
   set_rownames(colnames(prism_primary_signal_input)) %>% 
   set_colnames(colnames(prism_primary_dict_input))
 
+ProjectTemplate::cache("prism_primary_omp")
+
 recon_prism <- tcrossprod(prism_primary_dict_input, prism_primary_omp)
 
 proj_results <- tibble(column_name = colnames(recon_prism),
@@ -258,7 +260,6 @@ compound_imputed <- tcrossprod(get_cell_mat(webster_depmap), prism_primary_omp)
 load("./cache/depmap_umap.RData")
 compound_layout <- predict(depmap_umap, compound_imputed[, successful_cmpds] %>% t())
 
-
 #Visualize
 impute_df <- depmap_umap$layout %>% rbind(compound_layout) %>% 
   as_tibble(rownames = "Name") %>% 
@@ -269,6 +270,8 @@ impute_df <- depmap_umap$layout %>% rbind(compound_layout) %>%
   left_join(primary_compound_filtered_meta, by = c("Name" = "column_name")) %>% 
   mutate(moa_umap  =factor(moa_umap))
 
+ProjectTemplate::cache("impute_df")
+
 g_combo <- impute_df %>% 
   ggplot(aes(X, Y, label = paste(Name, name))) + 
   geom_point(data = subset(impute_df, Type == "Gene"), size = 0.5, alpha = 0.2, color = "gray70") +
@@ -277,7 +280,6 @@ g_combo <- impute_df %>%
   theme_void()
 
 plotly::ggplotly(g_combo)
-
 
 g_combo +
   ggsave(file.path(out_path, "compound_embedding.pdf"), width = 5.5, height = 4, device = cairo_pdf)
@@ -433,13 +435,14 @@ prism_secondary_omp <- read_csv(omp_file, col_names = F) %>%
   set_rownames(colnames(prism_omp_input)) %>% 
   set_colnames(colnames(dict_input))
 
+ProjectTemplate::cache("prism_secondary_omp")
+
+
 recon_prism <- tcrossprod(dict_input, prism_secondary_omp)
 
 proj_results_secondary <- tibble(column_name = rownames(prism_secondary_omp),
                        Pearson = map_dbl(column_name, function(x) cor(recon_prism[,x], prism_omp_input[,x])),
                        Median = matrixStats::colMedians(prism_omp_input))
-
-# heatmap -----------------------------------------------------------------
 
 
 # Plot secondary loadings -----------------------------------------------------------
