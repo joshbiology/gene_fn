@@ -119,7 +119,7 @@ primary_compound_filtered_meta <- primary_compound_stats_df %>%
 prism_primary_compounds_omp <- unique(primary_compound_filtered_meta$column_name)
 
 
-
+ProjectTemplate::cache("primary_compound_filtered_meta")
 
 # Prepare primary data for OMP ------------------------
 #Orthogonal matching pursuit requires 1. a pre-learned dictionary. 2. a set of new "signals" to model in terms of dict elements
@@ -187,7 +187,10 @@ ProjectTemplate::cache("prism_primary_omp")
 recon_prism <- tcrossprod(prism_primary_dict_input, prism_primary_omp)
 
 proj_results <- tibble(column_name = colnames(recon_prism),
-                       Pearson = map_dbl(column_name, function(x) cor(recon_prism[,x], prism_primary_signal_input[,x])))
+                       Pearson = map_dbl(column_name, function(x) cor(recon_prism[,x], prism_primary_signal_input[,x])),
+                       Median = matrixStats::colMedians(prism_primary_signal_input))
+
+ProjectTemplate::cache("proj_results")
 
 proj_results %>% 
   left_join(primary_compound_filtered_meta) %>% 
@@ -376,6 +379,8 @@ plot_compound_loadings(109)
 secondary_meta <- prism_secondary_meta %>% filter(moa %in%  (successful_moas %>% filter(Successful) %>% pull(moa_umap))) %>% #filter(!(grepl("PR300", compound_plate))) %>% 
   arrange(moa, name, screen_id, dose)
 
+ProjectTemplate::cache('secondary_meta')
+
 prism_secondary_tmp <- prism_secondary_lfc[,secondary_meta$column_name]
 
 
@@ -444,7 +449,7 @@ proj_results_secondary <- tibble(column_name = rownames(prism_secondary_omp),
                        Pearson = map_dbl(column_name, function(x) cor(recon_prism[,x], prism_omp_input[,x])),
                        Median = matrixStats::colMedians(prism_omp_input))
 
-
+ProjectTemplate::cache("proj_results_secondary")
 # Plot secondary loadings -----------------------------------------------------------
 plot_secondary_moa_loadings <- function(selected_group) {
   selected_compounds <- secondary_meta %>% dplyr::filter(moa == selected_group) %>% pull(column_name) %>% intersect(rownames(prism_secondary_omp))
