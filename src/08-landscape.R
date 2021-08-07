@@ -147,6 +147,7 @@ nmf_cluster <- pheatmap::pheatmap(nmf_projected,
                    filename = file.path(out_path, "function_localization_profile.pdf"), width = 10, height = 9)
 
 
+ProjectTemplate::cache('nmf_projected')
 
 # Curate localization data -------------------------------------------------
 

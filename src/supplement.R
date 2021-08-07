@@ -70,22 +70,69 @@ sample_info %>%
 
 
 
+
+
 #The following are generated from portal_assets.R:
 #Function Annotations
 #Gene Annotations
 #UMAP embedding coordinates
 
 
+# Function annot  --------------------------------------------------------------
+
+#gprofiler
+load("./cache/factor_gost_results.RData")
+
+essential_genes <- read_tsv("./data/raw/depmap/public-19q4_v23-common-essentials.tsv")$gene %>% 
+  convert_genes("cds_id", "symbol")
+
+factor_genes <- map(1:webster_depmap$rank, function(x){
+  loading <- get_gene_mat(webster_depmap)[,x]
+  loading <- loading[order(desc(abs(loading)))]
+  head(loading[loading != 0], 30) %>% names() %>% convert_cds_to_symbol()
+})
+
+frac_essential <- map_dbl(factor_genes, function(x) {
+  length(intersect(x, essential_genes))/length(x)
+})
+
+
+factor_gost_results %>% 
+  set_names( paste("V", 1:webster_depmap$rank, sep = "")) %>% 
+  map_dfr(~.$result %>% arrange(p_value), .id = "Name") %>% 
+  select(-query) %>% 
+  left_join(tibble(Name = paste("V", 1:webster_depmap$rank, sep = ""),
+         Frac_Essential = frac_essential,
+         Loaded_Genes = factor_genes %>% map_chr(paste, collapse = " "))) %>% 
+  select(Name, Frac_Essential, Loaded_Genes, everything()) %>% 
+  select(-parents) %>% 
+  write_tsv(file.path(out_path, "depmap_fn_annot_gprofiler.tsv"))
+
+#Biomarkers
+source("./munge/biomarker.R")
+fn_models %>% 
+  rename(Name = gene) %>% 
+  write_tsv(file.path(out_path, "depmap_fn_biomarkers.tsv"))
+
 # Other depmap resources --------------------------------------------------
 
 #subcell enrichment scores
+source("./munge/subcell.R")
+
 load("./cache/max_nmf_df.RData")
 write_tsv(max_nmf_df, file.path(out_path, "depmap_fn_subcell.tsv"))
 
-#gprofiler enrichment
-#Exported as part of 05-function_annot.R
+load("./cache/nmf_projected.RData")
+
+nmf_projected %>% 
+  set_colnames(bioid_meta$Location) %>% 
+  as_tibble(rownames = "Name") %>% 
+  write_tsv(file.path(out_path, "depmap_fn_subcell_raw_matrix.tsv"))
+
 
 #manual annotations
+#See TableS3, Sheet 7 from Supplemental Information.
+
 
 # PRISM annotations -------------------------------------------------------
 
