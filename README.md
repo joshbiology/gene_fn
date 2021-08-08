@@ -23,7 +23,6 @@ data
 │   	├── depmap_wide
 │   	├── durocher
 │   	├── durocher_no_graph
-│   	├── sanger
 │   	└── synthetic
 └── raw
     ├── depmap
