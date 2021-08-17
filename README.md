@@ -45,6 +45,6 @@ Figure 2 | 02-genotoxic
 Figure 3 | 03-depmap_preprocess, 04-depmap_postprocess, 05-function_annot, 06-sparse_codes, 08-landscape
 Figure 4 | 07-complexes
 Figure 5 | 08-landscape
-Figure 6 | 09-projection_2
+Figure 6 | 09-projection
 ```
 
