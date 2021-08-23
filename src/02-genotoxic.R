@@ -2,7 +2,8 @@ library(ProjectTemplate); load.project()
 library(igraph)
 
 
-out_path <- "./output/02-genotoxic"
+out_path <- file.path(".", "output", "02-genotoxic")
+create_output_folder(out_path)
 
 # Functions ---------------------------------------------------------------
 
@@ -608,9 +609,17 @@ plot_roc_over_loadings <- function(factor_obj) {
     
 }
 
-plot_roc_over_loadings(webster_genotoxic) +
+
+#make function # consistent with dictionary in figure
+tmp <- webster_genotoxic
+tmp$cell_mat<- webster_genotoxic$cell_mat[,function_order]
+tmp$gene_mat<- webster_genotoxic$gene_mat[,function_order]
+
+
+plot_roc_over_loadings(tmp) +
   ggsave(file.path(out_path, "roc_geneset_webster.pdf"), width = 4, height = 4, device = cairo_pdf)
 
+#other factorizations
 plot_roc_over_loadings(pca_factor) +
   ggsave(file.path(out_path, "roc_geneset_pca.pdf"), width = 4, height = 4, device = cairo_pdf)
 

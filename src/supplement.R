@@ -4,6 +4,7 @@
 library(ProjectTemplate); load.project()
 
 out_path <- file.path(".", "output", "supplement")
+create_output_folder(out_path)
 
 
 

@@ -2,6 +2,7 @@ library(ProjectTemplate); load.project()
 source("./munge/webster_depmap.R")
 
 out_path <- file.path(".", "output", "06-sparse_codes")
+create_output_folder(out_path)
 
 # Functions ----------------------------------------------------------------
 

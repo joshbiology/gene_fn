@@ -1,3 +1,7 @@
+create_output_folder <- function(out_path) {
+  ifelse(!dir.exists(out_path), dir.create(out_path, recursive = TRUE), FALSE)
+}
+
 
 export_for_matlab <- function(mat, out_file) {
   #Strip row and col names

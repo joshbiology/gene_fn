@@ -14,9 +14,9 @@
 library(ProjectTemplate); load.project()
 
 out_path <- file.path(".", "output", "portal_assets")
+create_output_folder(out_path)
 
 #Depmap
-load("./cache/avana_19q4_webster.RData")
 source("./munge/webster_depmap.R")
 
 
@@ -31,14 +31,12 @@ plotting_df %>%
 
 gene_loadings <- webster_depmap %>% 
   get_gene_mat() %>% 
-  set_colnames(paste("V", 1:webster_depmap$rank, sep = "")) %>% 
   as_tibble(rownames = "Name") 
 
 write_tsv(gene_loadings, file.path(out_path, "depmap_gene_to_function.tsv"))
 
 gene_loadings_stdev <- webster_depmap %>% 
   get_gene_mat_stdev () %>% 
-  set_colnames(paste("V", 1:webster_depmap$rank, sep = "")) %>% 
   as_tibble(rownames = "Name") 
 
 write_tsv(gene_loadings_stdev, file.path(out_path, "depmap_gene_to_function_stdev.tsv"))
@@ -99,13 +97,21 @@ depmap_loading_fn_card <- gene_loadings_stdev %>%
   arrange(Name, desc(abs(Loading))) %>% 
   ungroup() %>% 
   mutate(Rank = rep(1:4, ncol(avana_19q4_webster))) %>% 
-  pivot_wider(names_from = "Rank", values_from = c("Function", "Loading"))
+  pivot_wider(names_from = "Rank", values_from = c("Function", "Loading")) %>% 
+  mutate(entrezgene = convert_cds_to_entrez(Name), 
+         symbol = convert_cds_to_symbol(Name)) %>% 
+  select(Name, symbol, entrezgene, everything())
+
+#Pubmed
+source("./munge/pubmed.R")
 
 #Combine
 depmap_gene_meta <- depmap_loading_fn_card %>% 
   left_join(gene_recon_webster %>% rename("Name" = "Gene")) %>% 
   left_join(bioid_card) %>% 
-  left_join(depmap_gene_urls)
+  left_join(depmap_gene_urls) %>% 
+  left_join(pubmed_citations) %>% 
+  mutate(Understudied = Recon_Pearson >= 0.4 & Loading_1 >= 0.25 & Pubmed_Count <=15)
 
 
 tmp <- is.na(depmap_gene_meta$Location)

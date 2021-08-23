@@ -3,6 +3,7 @@
 library(ProjectTemplate); load.project()
 
 out_path <- file.path(".", "output", "08-landscape")
+create_output_folder(out_path)
 
 
 # Functions ---------------------------------------------------------------

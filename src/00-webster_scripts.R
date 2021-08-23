@@ -20,9 +20,12 @@ local <- list(matlab_path = "/Applications/MATLAB_R2019b.app/bin/matlab",
 cluster <- list(matlab_path = "matlab",
                 install_path = "")
 
-#define your own environment here!
+#And add / define your own environment here!
 
+
+#Create out path
 script_out_path <- file.path(".", "cluster_scripts")
+create_output_folder(script_out_path)
 
 # Define parameters -------------------------------------------------------
 

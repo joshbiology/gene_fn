@@ -23,7 +23,8 @@
 
 library(ProjectTemplate); load.project()
 
-out_path <- "./output/03-depmap_preprocess"
+out_path <- file.path(".", "output", "03-depmap_preprocess")
+create_output_folder(out_path)
 
 
 # Functions -------------------------------------------------------

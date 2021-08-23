@@ -4,7 +4,9 @@ library(ProjectTemplate); load.project()
 library(pheatmap)
 library(sn)
 
-out_path <- "./output/01-synthetic_example"
+out_path <- file.path(".", "output", "01-synthetic_example")
+create_output_folder(out_path)
+
 
 # Functions ---------------------------------------------------------------
 

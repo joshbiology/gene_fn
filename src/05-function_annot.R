@@ -2,6 +2,7 @@ library(ProjectTemplate); load.project()
 
 out_path <- file.path(".", "output", "05-function_annot")
 
+create_output_folder(out_path)
 
 
 # Output gene fn heatmaps -------------------------------------------------

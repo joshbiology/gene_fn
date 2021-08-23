@@ -7,6 +7,7 @@ plan(multisession)
 
 
 out_path <- file.path(".", "output", "04-depmap_postprocess")
+create_output_folder(out_path)
 
 # Functions ---------------------------------------------------------------
 
