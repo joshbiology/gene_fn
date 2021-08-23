@@ -4,6 +4,11 @@
 #The core algorithm behind Webster (DGRDL) is a Matlab script. I wrote a wrapper
 #for that script to accept parameters used in Webster.
 
+#If you are using the repo to generate figures, you can skip this code, since all the relevant
+#outputs are already in the "data/interim" folder.
+
+#If you're trying to run Webster on your own cluster, this may be relevant to your interests though.
+
 #There are machine specific dependencies to think about in the following, including:
 #1. Where is your matlab path?
 #2. Where is your install path for the Webster matlab dependencies?
