@@ -236,7 +236,7 @@ list(Ground_Truth = dict_mat,
   labs(color = "", 
        x = "Function 1 Dependency",
        y = "Function 2 Dependency") +
-  theme_minimal() +
+  theme_minimal()
   ggsave(file.path(out_path, "recovering_cell_state_synthetic.pdf"), width = 15, height = 3.5)
 
 
@@ -258,5 +258,5 @@ list(Ground_Truth = code_mat %>% t(),
   geom_point(size = 2.5) +
   facet_grid(Factor~Dataset) +
   scale_color_gradient2(low = "gray90", mid = ("#a184d1"), high = "#00AEEF", limits = c(0, 2), midpoint = 1, oob = scales::squish)  +
-  theme_void() +
+  theme_void()
   ggsave(file.path(out_path, "recovering_gene_manifold_synthetic.pdf"), width = 15, height = 3.5, device= cairo_pdf)

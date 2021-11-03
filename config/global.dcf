@@ -1,4 +1,4 @@
-version: 0.9.0
+version: 0.10.2
 data_loading: FALSE
 data_loading_header: FALSE
 data_ignore:
@@ -8,10 +8,11 @@ munging: FALSE
 logging: FALSE
 logging_level: INFO
 load_libraries: TRUE
-libraries:  reshape2, plyr, readxl, magrittr, ff, umap,
-        tidyverse
+libraries: reshape2, plyr, readxl, magrittr, ff, umap, tidyverse
 as_factors: FALSE
 attach_internal_libraries: FALSE
 cache_loaded_data: TRUE
 sticky_variables: NONE
 tables_type: data_table
+underscore_variables: FALSE
+cache_file_format: RData

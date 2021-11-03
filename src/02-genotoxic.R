@@ -123,8 +123,8 @@ stat_df %>%
 
 ggplot(stat_df, aes(sample = Var)) +
   geom_qq(size = 0.75) +
-  geom_hline(yintercept = 3, color = "red") +
-  ggsave(file.path(out_path, "genotoxic_gene_selection.png"), width = 4, height = 4)
+  geom_hline(yintercept = 3, color = "red")
+ggsave(file.path(out_path, "genotoxic_gene_selection.png"), width = 4, height = 4)
 
 damage_genes <- stat_df %>%
   filter(Var > 3) %>%
@@ -143,8 +143,8 @@ umap_out$layout %>%
   as_tibble(rownames = "Gene") %>% 
   left_join(olivieri_genes) %>% 
   ggplot(aes(V1, V2, color = Pathway, label = Gene)) +
-  geom_point() +
-  ggsave(file.path(out_path, "umap_durocher_raw_data.pdf"), width = 5, height = 4)
+  geom_point()
+ggsave(file.path(out_path, "umap_durocher_raw_data.pdf"), width = 5, height = 4)
 
 library(tidygraph)
 library(ggraph)
@@ -164,15 +164,15 @@ ggraph(tidy_cl_graph) +
   geom_edge_link(color = "gray20", alpha = 0.2) + 
   geom_node_point(size = 2.5) + 
   theme_graph() +
-  geom_node_text(aes(label = name), nudge_x = 0.1, nudge_y = -0.1) +
-  ggsave(file.path(out_path, "durocher_cl_graph.pdf"), width = 6, height = 5)
+  geom_node_text(aes(label = name), nudge_x = 0.1, nudge_y = -0.1)
+ggsave(file.path(out_path, "durocher_cl_graph.pdf"), width = 6, height = 5)
 
 # Run DGRDL ---------------------------------------------------------------
 
 genotoxic_input <- olivieri_mat[damage_genes,] %>% t()
 
 #For saving into the cache for use in other scripts:
-#ProjectTemplate::cache("genotoxic_input")
+ProjectTemplate::cache("genotoxic_input")
 
 export_for_matlab(olivieri_mat[damage_genes,] %>% t(), "./output/02-genotoxic/durocher_matlab.csv")
 
@@ -228,8 +228,8 @@ metrics %>%
   geom_smooth() +
   geom_point(size = 2) +
   labs(color='T') +
-  facet_wrap(~Graph_Regularized, nrow = 1) +
-  ggsave(file.path(out_path, "durocher_graphdl_fnorm.pdf"), width = 7, height = 3.5, device = cairo_pdf)
+  facet_wrap(~Graph_Regularized, nrow = 1)
+ggsave(file.path(out_path, "durocher_graphdl_fnorm.pdf"), width = 7, height = 3.5, device = cairo_pdf)
 
 metrics %>% 
   ggplot(aes(K, Gene_Laplacian, color = factor(T_param), shape = Graph_Regularized)) +
@@ -238,16 +238,16 @@ metrics %>%
   labs(color='T') +
   facet_wrap(~Graph_Regularized, nrow = 1) +
   scale_y_log10() +
-  labs(y = "log(Gene Laplacian)") +
-  ggsave(file.path(out_path, "durocher_graphdl_gene_lap.pdf"), width = 7, height = 3.5, device = cairo_pdf)
+  labs(y = "log(Gene Laplacian)")
+ggsave(file.path(out_path, "durocher_graphdl_gene_lap.pdf"), width = 7, height = 3.5, device = cairo_pdf)
 
 metrics %>% 
   ggplot(aes(K, Cell_Line_Laplacian, color = factor(T_param), shape = Graph_Regularized)) +
   geom_point() +
   geom_smooth() +
   labs(color='T') +
-  facet_wrap(~Graph_Regularized, nrow = 1) +
-  ggsave(file.path(out_path, "durocher_graphdl_cl_lap.pdf"), width = 7, height = 3.5, device = cairo_pdf)
+  facet_wrap(~Graph_Regularized, nrow = 1)
+ggsave(file.path(out_path, "durocher_graphdl_cl_lap.pdf"), width = 7, height = 3.5, device = cairo_pdf)
 
 
 # Set up Webster genotoxic  -----------------------------------------------------------------
@@ -441,8 +441,8 @@ umap2_df_gene %>%
   geom_point(alpha = 0.85) +
   scale_shape_manual(values=c(17, 16)) +
   scale_color_manual(values = c("Gene" = "gray90", "Factor" = "gray20")) +
-  theme_void() +
-  ggsave(file.path(out_path,"durocher_gene_fn_umap.pdf"), width = 2.75, height = 2.5, device = cairo_pdf)
+  theme_void()
+ggsave(file.path(out_path,"durocher_gene_fn_umap.pdf"), width = 2.75, height = 2.5, device = cairo_pdf)
 
 
 umap2_df_gene %>% 
@@ -453,15 +453,15 @@ umap2_df_gene %>%
   scale_shape_manual(values=c(17, 16)) +
   scale_color_gradient2(low = "#BD6C33", mid = "gray90", high =  "#00AEEF", midpoint = 0, limits=c(-10, 10), oob = scales::squish) +
   facet_wrap(~Factor) +
-  theme_void() +
-  ggsave(file.path(out_path,"durocher_gene_loadings_umap.pdf"), width = 8, height = 7, device = cairo_pdf)
+  theme_void()
+ggsave(file.path(out_path,"durocher_gene_loadings_umap.pdf"), width = 8, height = 7, device = cairo_pdf)
 
 umap2_df_gene %>% 
   left_join(olivieri_genes, by = c("Name" = "Gene")) %>% 
   ggplot(aes(V1, V2, color = Pathway, shape = Type)) +
   scale_shape_manual(values=c(17, 16)) +
-  geom_point() +
-  ggsave(file.path(out_path,"umap_durocher_with_lit_annotations.pdf"), width = 5, height = 4)
+  geom_point()
+ggsave(file.path(out_path,"umap_durocher_with_lit_annotations.pdf"), width = 5, height = 4)
 
 
 # Export Function annotations ---------------------------------------------
