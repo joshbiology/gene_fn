@@ -1,7 +1,7 @@
 # Prism -------------------------------------------------------------------
 #primary-screen-e5c7
-prism_lfc <- read_csv(file.path(".", "data", "raw", "prism", "primary-screen-public-tentative_v11-primary-replicate-collapsed-logfold-change.csv")) %>% 
-  column_to_rownames("X1") %>% 
+prism_lfc <- read_csv(file.path(".", "data", "raw", "prism", "primary-screen-public-tentative_v11-primary-replicate-collapsed-logfold-change.csv")) %>%
+  column_to_rownames("X1") %>%
   as.matrix()
 prism_meta <- read_tsv(file.path(".", "data", "raw", "prism", "primary-screen-public-tentative_v11-primary-replicate-collapsed-treatment-info.tsv"))
 
@@ -13,19 +13,19 @@ prism_secondary_meta <- read_tsv(file.path(".", "data", "raw", "prism","secondar
 
 
 prism_secondary_lfc <- read_csv(file.path(".", "data", "raw", "prism",
-                                          "secondary-screen-public-tentative_v18-secondary-replicate-collapsed-logfold-change.csv")) %>% 
-  column_to_rownames("X1") %>% 
+                                          "secondary-screen-public-tentative_v18-secondary-replicate-collapsed-logfold-change.csv")) %>%
+  column_to_rownames("X1") %>%
   as.matrix()
 
-prism_secondary_rownames <- read_tsv(file.path(".", "data", "raw", "prism", "secondary-screen-public-tentative_v18-cell-line-info.tsv")) %>% 
-  filter(str_sub(row_name, 1, 5) == "PR500", !is.na(depmap_id), row_name %in% rownames(prism_secondary_lfc)) %>% 
-  group_by(depmap_id) %>% 
-  filter(row_number() == 1) %>% 
+prism_secondary_rownames <- read_tsv(file.path(".", "data", "raw", "prism", "secondary-screen-public-tentative_v18-cell-line-info.tsv")) %>%
+  dplyr::filter(str_sub(row_name, 1, 5) == "PR500", !is.na(depmap_id), row_name %in% rownames(prism_secondary_lfc)) %>% 
+  group_by(depmap_id) %>%
+  dplyr::filter(row_number() == 1) %>%
   ungroup()
 
 
 #Filter PR500
-prism_secondary_lfc <- prism_secondary_lfc[prism_secondary_rownames$row_name,] %>% 
+prism_secondary_lfc <- prism_secondary_lfc[prism_secondary_rownames$row_name,] %>%
   set_rownames(prism_secondary_rownames$depmap_id)
 
 #Sanity check
@@ -37,4 +37,3 @@ length(unique(rownames(prism_secondary_lfc)))
 #https://depmap.org/repurposing/
 #User note - a compound can have many MOA's, resulting in multiple rows. Keep that in mind when subsetting.
 prism_umap_annot <- read_csv(file.path(".", "data", "raw", "prism", "prism_repurposing_umap.csv"))
-

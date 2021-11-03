@@ -20,17 +20,17 @@ write_tsv(genotoxic_input %>% as_tibble(rownames = "Treatment"), file.path(out_p
 
 #Factorized output
 #Gene loadings
-get_gene_mat_stdev(webster_genotoxic) %>% 
-  magrittr::extract(,function_order) %>% 
-  set_colnames(function_names[function_order]) %>% 
-  as_tibble(rownames = "Gene") %>% 
+get_gene_mat_stdev(webster_genotoxic) %>%
+  magrittr::extract(,function_order) %>%
+  set_colnames(function_names[function_order]) %>%
+  as_tibble(rownames = "Gene") %>%
   write_tsv(file.path(out_path, "genotoxic_gene_loadings.tsv"))
 
 #Dictionary matrix
-get_cell_mat(webster_genotoxic) %>% 
-  magrittr::extract(,function_order) %>% 
-  set_colnames(function_names[function_order]) %>% 
-  as_tibble(rownames = "Treatment") %>% 
+get_cell_mat(webster_genotoxic) %>%
+  magrittr::extract(,function_order) %>%
+  set_colnames(function_names[function_order]) %>%
+  as_tibble(rownames = "Treatment") %>%
   write_tsv(file.path(out_path, "genotoxic_dictionary.tsv"))
 
 #The following are generated from portal_assets.R:
@@ -49,13 +49,13 @@ write_tsv(avana_19q4_webster %>% as_tibble(rownames = "DepMap_ID"), file.path(ou
 
 #Factorized output
 #Gene loadings
-get_gene_mat_stdev(webster_depmap) %>% 
-  as_tibble(rownames = "Gene") %>% 
+get_gene_mat_stdev(webster_depmap) %>%
+  as_tibble(rownames = "Gene") %>%
   write_tsv(file.path(out_path, "depmap_gene_loadings.tsv"))
 
 #Dictionary matrix
-get_cell_mat(webster_depmap) %>% 
-  as_tibble(rownames = "DepMap_ID") %>% 
+get_cell_mat(webster_depmap) %>%
+  as_tibble(rownames = "DepMap_ID") %>%
   write_tsv(file.path(out_path, "depmap_dictionary.tsv"))
 
 
@@ -64,8 +64,8 @@ get_cell_mat(webster_depmap) %>%
 #Cell Line annotations
 source("./munge/depmap_sample_info.R")
 
-sample_info %>% 
-  filter(DepMap_ID %in% rownames(get_cell_mat(webster_depmap))) %>% 
+sample_info %>%
+  dplyr::filter(DepMap_ID %in% rownames(get_cell_mat(webster_depmap))) %>%
   write_tsv(file.path(out_path, "depmap_cell_line_info.tsv"))
 
 
@@ -84,7 +84,7 @@ sample_info %>%
 #gprofiler
 load("./cache/factor_gost_results.RData")
 
-essential_genes <- read_tsv("./data/raw/depmap/public-19q4_v23-common-essentials.tsv")$gene %>% 
+essential_genes <- read_tsv("./data/raw/depmap/public-19q4_v23-common-essentials.tsv")$gene %>%
   convert_genes("cds_id", "symbol")
 
 factor_genes <- map(1:webster_depmap$rank, function(x){
@@ -98,21 +98,21 @@ frac_essential <- map_dbl(factor_genes, function(x) {
 })
 
 
-factor_gost_results %>% 
-  set_names( paste("V", 1:webster_depmap$rank, sep = "")) %>% 
-  map_dfr(~.$result %>% arrange(p_value), .id = "Name") %>% 
-  select(-query) %>% 
+factor_gost_results %>%
+  set_names( paste("V", 1:webster_depmap$rank, sep = "")) %>%
+  map_dfr(~.$result %>% arrange(p_value), .id = "Name") %>%
+  select(-query) %>%
   left_join(tibble(Name = paste("V", 1:webster_depmap$rank, sep = ""),
          Frac_Essential = frac_essential,
-         Loaded_Genes = factor_genes %>% map_chr(paste, collapse = " "))) %>% 
-  select(Name, Frac_Essential, Loaded_Genes, everything()) %>% 
-  select(-parents) %>% 
+         Loaded_Genes = factor_genes %>% map_chr(paste, collapse = " "))) %>%
+  select(Name, Frac_Essential, Loaded_Genes, everything()) %>%
+  select(-parents) %>%
   write_tsv(file.path(out_path, "depmap_fn_annot_gprofiler.tsv"))
 
 #Biomarkers
 source("./munge/biomarker.R")
-fn_models %>% 
-  rename(Name = gene) %>% 
+fn_models %>%
+  rename(Name = gene) %>%
   write_tsv(file.path(out_path, "depmap_fn_biomarkers.tsv"))
 
 # Other depmap resources --------------------------------------------------
@@ -125,9 +125,9 @@ write_tsv(max_nmf_df, file.path(out_path, "depmap_fn_subcell.tsv"))
 
 load("./cache/nmf_projected.RData")
 
-nmf_projected %>% 
-  set_colnames(bioid_meta$Location) %>% 
-  as_tibble(rownames = "Name") %>% 
+nmf_projected %>%
+  set_colnames(bioid_meta$Location) %>%
+  as_tibble(rownames = "Name") %>%
   write_tsv(file.path(out_path, "depmap_fn_subcell_raw_matrix.tsv"))
 
 
@@ -139,7 +139,7 @@ nmf_projected %>%
 
 #Combined primary embedding
 load("./cache/impute_df.RData")
-impute_df %>% 
+impute_df %>%
   write_tsv(file.path(out_path, "prism_embedding.tsv"))
 
 
@@ -177,7 +177,3 @@ write_tsv(secondary_meta, file.path(out_path, "prism_secondary_meta.tsv"))
 #Compound results
 load("./cache/proj_results_secondary.RData")
 write_tsv(proj_results_secondary, file.path(out_path, "prism_secondary_proj_results.tsv"))
-
-
-
-

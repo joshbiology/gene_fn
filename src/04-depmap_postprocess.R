@@ -1,4 +1,3 @@
-
 library(ProjectTemplate); load.project()
 
 require(future)
@@ -67,7 +66,7 @@ generate_metrics <- function(output) {
   })
 
   params_df %>%
-    mutate(F_Norm = f_norms,
+    dplyr::mutate(F_Norm = f_norms,
            Gene_Lap  =g_laps)
 }
 
@@ -96,9 +95,9 @@ write_tsv(depmap_grid_metrics_df, path = file.path(out_path, "depmap_grid_metric
 rm(depmap_grid_output)
 
 depmap_grid_metrics_df %>%
-  mutate(Gene_Lap = log(Gene_Lap, 10)) %>%
+  dplyr::mutate(Gene_Lap = log(Gene_Lap, 10)) %>%
   pivot_longer(names_to = "Metric", values_to = "Value", c(F_Norm, Gene_Lap)) %>%
-  filter(K < 600) %>%
+  dplyr::filter(K < 600) %>%
   ggplot(aes(x = K, y = Value, group = T_param, color = factor(T_param))) +
   geom_point() +
   geom_line() +
@@ -135,11 +134,11 @@ depmap_wide_metrics_df %>%
 
 depmap_wide_metrics_df %>%
   arrange(K) %>%
-  mutate(Diff_F = c(0,diff(F_Norm)),
+  dplyr::mutate(Diff_F = c(0,diff(F_Norm)),
          Diff_Gene_L = c(0,diff(Gene_Lap))) %>%
   slice(-1) %>%
   pivot_longer(names_to = "Metric", values_to = "Value", c("Diff_F", "Diff_Gene_L")) %>%
-  filter(K < 500) %>%
+  dplyr::filter(K < 500) %>%
   ggplot(aes(x = K, y = Value))+
   geom_vline(xintercept = 220) +
   xlim(c(0, 500)) +
@@ -181,11 +180,11 @@ grouped_metrics <- depmap_deep_metrics_df %>%
   group_by(K) %>% summarize(Mean_F_Norm = mean(F_Norm), Mean_Gene_Lap = mean(Gene_Lap))
 
 grouped_metrics %>%
-  mutate(Diff_F = c(0,diff(Mean_F_Norm)),
+  dplyr::mutate(Diff_F = c(0,diff(Mean_F_Norm)),
          Diff_Gene_L = c(0,diff(Mean_Gene_Lap))) %>%
   slice(-1) %>%
   pivot_longer(names_to = "Metric", values_to = "Value", c("Diff_F", "Diff_Gene_L")) %>%
-  filter(K < 500) %>%
+  dplyr::filter(K < 500) %>%
   ggplot(aes(x = K, y = Value))+
   geom_jitter() +
   geom_smooth() +
@@ -460,9 +459,9 @@ noisy_pearson_df <- map_dfr(test_recon, function(x) tibble(Gene = test_genes,
 
 noisy_pearson_df %>%
   group_by(Noise_Level) %>%
-  mutate(Mean = mean(Mean_Pearson)) %>%
+  dplyr::mutate(Mean = mean(Mean_Pearson)) %>%
   ungroup() %>%
-  mutate(Noise_Level = factor(Noise_Level, labels = c("σ=0", "σ=0.25", "σ=0.5", "σ=1", "σ=1.5"))) %>%
+  dplyr::mutate(Noise_Level = factor(Noise_Level, labels = c("σ=0", "σ=0.25", "σ=0.5", "σ=1", "σ=1.5"))) %>%
   ggplot(aes(x = Mean_Pearson)) +
   geom_density(fill = "gray90") +
   geom_vline(aes(xintercept = Mean), color = "red", linetype = "dashed") +
@@ -540,7 +539,7 @@ recon_df <- tibble(Gene= common_genes,
 recon_df %>%
   pivot_longer(names_to = "Metric", values_to = "Value", -Gene) %>%
   group_by(Metric) %>%
-  mutate(Mean = mean(Value)) %>%
+  dplyr::mutate(Mean = mean(Value)) %>%
   ungroup() %>%
   ggplot(aes(Value)) +
   geom_density(fill = "gray90") +

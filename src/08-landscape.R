@@ -47,10 +47,10 @@ ProjectTemplate::cache("depmap_umap")
 
 plotting_df <- depmap_umap$layout %>%
   as_tibble(rownames = "Name") %>%
-  mutate(Type = c(rep("Function", ncol(get_cell_mat(webster_depmap))), rep("Gene", dim(avana_19q4_webster)[2]))) %>%
-  mutate(Gene_Name = convert_genes(Name, from = "cds_id", "symbol")) %>%
+  dplyr::mutate(Type = c(rep("Function", ncol(get_cell_mat(webster_depmap))), rep("Gene", dim(avana_19q4_webster)[2]))) %>%
+  dplyr::mutate(Gene_Name = convert_genes(Name, from = "cds_id", "symbol")) %>%
   rename(X = V1, Y = V2) %>%
-  mutate(Y = -Y)
+  dplyr::mutate(Y = -Y)
 
 ProjectTemplate::cache("plotting_df")
 
@@ -100,7 +100,7 @@ plotting_df %>%
 plotting_df %>%
   left_join(tibble(Name = colnames(avana_19q4_webster),
                    Median = avana_19q4_webster %>% matrixStats::colMedians())) %>%
-  filter(Type == "Gene") %>%
+  dplyr::filter(Type == "Gene") %>%
   ggplot(aes(X, Y)) +
   geom_point(size = 0.5, alpha = 0.75, aes(color = Median)) +
   scale_color_distiller(palette = "RdBu")+
@@ -110,7 +110,7 @@ plotting_df %>%
 #Genes by Webster reconstruction
 plotting_df %>%
   left_join(gene_recon_webster, by = c("Name" = "Gene")) %>%
-  filter(Type == "Gene") %>%
+  dplyr::filter(Type == "Gene") %>%
   ggplot(aes(X, Y)) +
   geom_point(size = 0.5, alpha = 0.3, aes(color = Recon_Pearson)) +
   scale_color_viridis_c() +
@@ -122,7 +122,7 @@ plotting_df %>%
 plotting_df %>%
   left_join(tibble(Name = colnames(avana_19q4_webster),
                    Var = avana_19q4_webster %>% matrixStats::colVars())) %>%
-  filter(Type == "Gene") %>%
+  dplyr::filter(Type == "Gene") %>%
   ggplot(aes(X, Y)) +
   geom_point(size = 0.5, alpha = 0.3, aes(color = log(Var))) +
   scale_color_viridis_c(option="magma") +
@@ -161,8 +161,8 @@ max_nmf_df <- nmf_projected %>%
   as_tibble() %>%
   left_join(entropy_localization %>% enframe("Name", "Entropy")) %>%
   left_join(bioid_meta) %>%
-  mutate(Specificity = scales::rescale(Entropy, to=c(1,0))) %>%
-  mutate(Location = factor(Location, levels= bioid_meta$Location[nmf_cluster$tree_col$order]))
+  dplyr::mutate(Specificity = scales::rescale(Entropy, to=c(1,0))) %>%
+  dplyr::mutate(Location = factor(Location, levels= bioid_meta$Location[nmf_cluster$tree_col$order]))
 
 ProjectTemplate::cache("max_nmf_df")
 
@@ -212,9 +212,9 @@ loc_plot_df <- plotting_df %>%
 
 
 loc_plot <- loc_plot_df %>%
-  filter(Type == "Function") %>%
+  dplyr::filter(Type == "Function") %>%
   ggplot(aes(X, Y)) +
-  geom_point(data = loc_plot_df %>% filter(Type == "Gene"), size = 0.5, alpha = 0.4, color = "gray90") +
+  geom_point(data = loc_plot_df %>% dplyr::filter(Type == "Gene"), size = 0.5, alpha = 0.4, color = "gray90") +
   geom_point(shape = 17, aes(color = Color, alpha = Specificity)) +
   scale_colour_identity() +
   scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +
@@ -225,7 +225,7 @@ loc_plot +
 
 
 loc_plot_df %>%
-  filter(Type == "Function") %>%
+  dplyr::filter(Type == "Function") %>%
   ggplot(aes(X, Y)) +
   geom_point(shape = 17, size= 0.75, aes(color = Color, alpha = Specificity)) +
   scale_colour_identity() +
@@ -237,9 +237,9 @@ loc_plot_df %>%
 
 
 loc_plot_df %>%
-  filter(Type == "Function") %>%
+  dplyr::filter(Type == "Function") %>%
   ggplot(aes(X, Y)) +
-  geom_point(data = loc_plot_df %>% filter(Type == "Gene"), size = 0.5, alpha = 0.4, color = "gray90") +
+  geom_point(data = loc_plot_df %>% dplyr::filter(Type == "Gene"), size = 0.5, alpha = 0.4, color = "gray90") +
   geom_point(shape = 17, aes(color = Color, alpha = Specificity)) +
   geom_text(aes(label = Name, color = Color, alpha = Specificity)) +
   scale_colour_identity() +
@@ -249,8 +249,8 @@ loc_plot_df %>%
 
 g1 <- loc_plot_df %>%
   ggplot(aes(X, Y, label = Name)) +
-  geom_point(data = loc_plot_df %>% filter(Type == "Gene"), size = 0.5, alpha = 0.4, color = "gray50") +
-  geom_point(data = loc_plot_df %>% filter(Type == "Function"), shape = 17, aes(color = Color, alpha = Specificity)) +
+  geom_point(data = loc_plot_df %>% dplyr::filter(Type == "Gene"), size = 0.5, alpha = 0.4, color = "gray50") +
+  geom_point(data = loc_plot_df %>% dplyr::filter(Type == "Function"), shape = 17, aes(color = Color, alpha = Specificity)) +
   scale_colour_identity() +
   scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +
   theme_void()
@@ -282,11 +282,11 @@ plotly::ggplotly(g3)
 
 plotting_window <- function(fn_names, nudge = 0.3) {
 
-  tmp <- loc_plot_df %>% filter(Name %in% fn_names)
+  tmp <- loc_plot_df %>% dplyr::filter(Name %in% fn_names)
   window_x <- c(min(tmp$X)-nudge, max(tmp$X)+nudge)
   window_y <- c(min(tmp$Y)-nudge, max(tmp$Y)+nudge)
   loc_plot_df %>%
-    filter(X > window_x[1], X < window_x[2], Y > window_y[1], Y < window_y[2])
+    dplyr::filter(X > window_x[1], X < window_x[2], Y > window_y[1], Y < window_y[2])
 }
 
 plot_loadings_panel <- function(df, focus_fn, gene_labs = T){
@@ -296,7 +296,7 @@ plot_loadings_panel <- function(df, focus_fn, gene_labs = T){
     get_gene_mat() %>%
     as_tibble(rownames = "Name")   %>%
     pivot_longer(names_to = "Function", values_to = "Loading", starts_with("V")) %>%
-    filter(Function == focus_fn)
+    dplyr::filter(Function == focus_fn)
 
   df <-   df %>%
     left_join(gene_loadings_df)
@@ -306,10 +306,10 @@ plot_loadings_panel <- function(df, focus_fn, gene_labs = T){
       ggplot(aes(X, Y, color = Loading, shape = Type)) +
       geom_point(data = subset(df, Type == "Gene" & Loading == 0),alpha = 0.85) +
       geom_point(data = subset(df, Type == "Gene" & Loading != 0),alpha = 0.85) +
-      geom_text(data = df %>% filter(Type == "Gene"), aes(label = Gene_Name), alpha = 0.5, color = "black", position = position_nudge(y = -0.01)) +
+      geom_text(data = df %>% dplyr::filter(Type == "Gene"), aes(label = Gene_Name), alpha = 0.5, color = "black", position = position_nudge(y = -0.01)) +
 
       geom_point(data = subset(df, Type == "Function"),alpha = 0.85) +
-      geom_text(data = df %>% filter(Type == "Function"), aes(label = Name),alpha = 0.5, color = "black",position = position_nudge(y = -0.01)) +
+      geom_text(data = df %>% dplyr::filter(Type == "Function"), aes(label = Name),alpha = 0.5, color = "black",position = position_nudge(y = -0.01)) +
 
       scale_shape_manual(values=c(17, 16)) +
       scale_color_gradient2(low = "#BD6C33", mid = "gray90", high =  "#00AEEF", midpoint = 0, limits=c(-10, 10), oob = scales::squish) +
@@ -336,9 +336,9 @@ plot_gene_panel <- function(df){
 
   df %>%
     ggplot(aes(X, Y, label = Gene_Name)) +
-    geom_point(data = df %>% filter(Type == "Gene"), size = 1.5, alpha = 0.5, color = "gray70") +
-    geom_text(data = df %>% filter(Type == "Gene"), alpha = 0.5, color = "black") +
-    geom_point(data = df %>% filter(Type == "Function"), size = 3,shape = 17, aes(color = Color, alpha = Specificity)) +
+    geom_point(data = df %>% dplyr::filter(Type == "Gene"), size = 1.5, alpha = 0.5, color = "gray70") +
+    geom_text(data = df %>% dplyr::filter(Type == "Gene"), alpha = 0.5, color = "black") +
+    geom_point(data = df %>% dplyr::filter(Type == "Function"), size = 3,shape = 17, aes(color = Color, alpha = Specificity)) +
     scale_colour_identity() +
     scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +
     theme_void()
@@ -347,9 +347,9 @@ plot_gene_panel <- function(df){
 plot_fn_panel <- function(df) {
   df %>%
     ggplot(aes(X, Y, label = Name)) +
-    geom_point(data = df %>% filter(Type == "Gene"), size = 1.5, alpha = 0.5, color = "gray70") +
-    geom_point(data = df %>% filter(Type == "Function"), size = 3,shape = 17, aes(color = Color, alpha = Specificity)) +
-    geom_text(data = df %>% filter(Type == "Function"),  aes(color = Color, alpha = Specificity), nudge_y = .05) +
+    geom_point(data = df %>% dplyr::filter(Type == "Gene"), size = 1.5, alpha = 0.5, color = "gray70") +
+    geom_point(data = df %>% dplyr::filter(Type == "Function"), size = 3,shape = 17, aes(color = Color, alpha = Specificity)) +
+    geom_text(data = df %>% dplyr::filter(Type == "Function"),  aes(color = Color, alpha = Specificity), nudge_y = .05) +
     scale_colour_identity() +
     scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +
     theme_void()
@@ -363,15 +363,15 @@ loadings_df <- webster_depmap %>%
   get_gene_mat() %>%
   as_tibble(rownames=  "Gene") %>%
   pivot_longer(names_to = "Function", values_to = "Loading", -Gene) %>%
-  filter(abs(Loading) > 0)
+  dplyr::filter(abs(Loading) > 0)
 
 threshold <- 0.05
 
 factor_pleiotrop_df <- loadings_df %>%
   left_join(loadings_df, by = "Gene") %>%
-  filter(Function.x != Function.y, Function.x < Function.y) %>%
-  mutate(Fraction = abs(Loading.x)/(abs(Loading.x)+abs(Loading.y))) %>%
-  filter(Fraction < 1-threshold, Fraction > threshold, Loading.x >1, Loading.y > 1) %>%
+  dplyr::filter(Function.x != Function.y, Function.x < Function.y) %>%
+  dplyr::mutate(Fraction = abs(Loading.x)/(abs(Loading.x)+abs(Loading.y))) %>%
+  dplyr::filter(Fraction < 1-threshold, Fraction > threshold, Loading.x >1, Loading.y > 1) %>%
   arrange(Fraction)
 
 plot_pleiotropy_network <- function(fns, pathway_name) {
@@ -379,7 +379,7 @@ plot_pleiotropy_network <- function(fns, pathway_name) {
   require(tidygraph)
   require(ggraph)
   tmp_graph <- as_tbl_graph( igraph::graph_from_data_frame(factor_pleiotrop_df %>%
-                                                             filter(Function.x %in% fns & Function.y%in% fns) %>%
+                                                             dplyr::filter(Function.x %in% fns & Function.y%in% fns) %>%
                                                              count(Function.x, Function.y) %>%
                                                              arrange(desc(n)), directed = F))
 

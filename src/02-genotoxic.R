@@ -216,11 +216,11 @@ cl_laplacian <- furrr::future_map_dbl(grid_factorized, function(x) {
 
 
 
-metrics <- params_df %>% mutate(F_Norm = f_norms,
+metrics <- params_df %>% dplyr::mutate(F_Norm = f_norms,
                                 Gene_Laplacian = gene_laplacian,
                                 Cell_Line_Laplacian = cl_laplacian
 )  %>%
-  mutate(Graph_Regularized = case_when(Beta == 0 ~ F,
+  dplyr::mutate(Graph_Regularized = case_when(Beta == 0 ~ F,
                                        T ~ T))
 
 metrics %>%
@@ -267,7 +267,7 @@ webster_genotoxic %>% get_gene_mat() %>%
   as_tibble(rownames = "Name") %>%
   write_tsv(file.path(".", "output", "portal_assets", "durocher_gene_to_function.tsv"))
 
-function_names %>% enframe("Name", "Display_Name") %>% mutate(Name = paste("V", Name, sep = "")) %>%
+function_names %>% enframe("Name", "Display_Name") %>% dplyr::mutate(Name = paste("V", Name, sep = "")) %>%
   write_tsv(file.path(".", "output", "portal_assets", "durocher_fn_display_name.tsv"))
 
 
@@ -429,12 +429,12 @@ umap2_out <- rbind(olivieri_mat[damage_genes,],
 
 umap2_df_gene <- umap2_out %>%
   umap_to_df("Name") %>%
-  mutate(Type = c(rep("Gene", length(damage_genes)), rep("Factor", 10))) %>%
+  dplyr::mutate(Type = c(rep("Gene", length(damage_genes)), rep("Factor", 10))) %>%
   left_join(gene_df, by = c("Name"= "Gene"))
 
 write_tsv(umap2_out %>%
             umap_to_df("Name") %>%
-            mutate(Type = c(rep("Gene", length(damage_genes)), rep("Factor", 10))), file.path(out_path,"durocher_embedding_w_functions.tsv"))
+            dplyr::mutate(Type = c(rep("Gene", length(damage_genes)), rep("Factor", 10))), file.path(out_path,"durocher_embedding_w_functions.tsv"))
 
 umap2_df_gene %>%
   ggplot(aes(V1, V2, color = Type, shape = Type)) +
@@ -447,7 +447,7 @@ ggsave(file.path(out_path,"durocher_gene_fn_umap.pdf"), width = 2.75, height = 2
 
 umap2_df_gene %>%
   pivot_longer(names_to = "Factor", values_to = "Loading", as.character(1:10)) %>%
-  mutate(Factor = factor(Factor, levels = function_order, labels = function_names[function_order])) %>%
+  dplyr::mutate(Factor = factor(Factor, levels = function_order, labels = function_names[function_order])) %>%
   ggplot(aes(V1, V2, color = Loading, shape = Type)) +
   geom_point(alpha = 0.85) +
   scale_shape_manual(values=c(17, 16)) +
@@ -554,10 +554,10 @@ ics <- purrr::map(K_param, ~icasso_ica(olivieri_mat[damage_genes,],nbComp=., alg
 
 mstd_df <- purrr::map(ics, ~.$Iq %>% as.data.frame() %>%
                         set_colnames("Stability") %>%
-                        mutate(IC = row_number())) %>%
+                        dplyr::mutate(IC = row_number())) %>%
   set_names(K_param) %>%
   enframe("Rank") %>%
-  mutate(Rank = as.numeric(Rank)) %>%
+  dplyr::mutate(Rank = as.numeric(Rank)) %>%
   unnest(value)
 
 mstd_df %>%
@@ -578,7 +578,7 @@ ica_factor <- fastICA_to_factorized(ics[[which(K_param == 10)]])
 
 one_hot_mat <- olivieri_genes %>%
   dplyr::filter(Pathway != "HIPPO", Pathway != "OTHER") %>%
-  mutate(Is_Pathway = T) %>%
+  dplyr::mutate(Is_Pathway = T) %>%
   pivot_wider(names_from = "Pathway", values_from = "Is_Pathway", values_fill = F) %>%
   column_to_rownames("Gene") %>%
   as.matrix() %>%
@@ -594,7 +594,7 @@ plot_roc_over_loadings <- function(factor_obj) {
   out <- map_dfr(1:ncol(one_hot_mat), function(x) {
     gene_loadings %>%
       inner_join(one_hot_mat[,x] %>% enframe("Gene", "Truth")) %>%
-      mutate(Truth = factor(Truth)) %>%
+      dplyr::mutate(Truth = factor(Truth)) %>%
       group_by(Factor) %>%
       yardstick::roc_auc(Truth, Loading, event_level = "second")}, .id = "Index")   #https://yardstick.tidymodels.org/
 

@@ -144,7 +144,7 @@ gene_vars <- map_df(fitness_list, function(mat) mat %>%
                       matrixStats::colVars(na.rm = T) %>%
                       set_names(colnames(mat)) %>%
                       enframe("Gene", "Var") %>%
-                      mutate(Rank = order(order(Var))), .id = "Dataset")
+                      dplyr::mutate(Rank = order(order(Var))), .id = "Dataset")
 
 gene_vars %>%
   ggplot(aes(Var)) +
@@ -180,15 +180,15 @@ gene_vars %>%
 qq_data <- gene_vars %>%
   group_by(Dataset) %>%
   arrange(Dataset, Rank) %>%
-  mutate(Quantile = ppoints(length(Rank))) %>%
-  mutate(Theoretical = qnorm(Quantile)) %>%
+  dplyr::mutate(Quantile = ppoints(length(Rank))) %>%
+  dplyr::mutate(Theoretical = qnorm(Quantile)) %>%
   ungroup()
 
 qq_fit_line_avana <- lm(Var ~ Theoretical, data = qq_data %>%
-                          filter(Theoretical < 0, Theoretical > -3, Dataset == "Avana"))
+                          dplyr::filter(Theoretical < 0, Theoretical > -3, Dataset == "Avana"))
 
 qq_fit_line_sanger <- lm(Var ~ Theoretical, data = qq_data %>%
-                           filter(Theoretical < 0, Theoretical > -3, Dataset == "Sanger"))
+                           dplyr::filter(Theoretical < 0, Theoretical > -3, Dataset == "Sanger"))
 
 #Rank cutoff determines which genes are included in the linear regression
 min_rank <- 5000
@@ -196,7 +196,7 @@ min_rank <- 5000
 min_diff <- 0.3
 
 qq_data <- qq_data %>%
-  mutate(Predicted = c(predict(qq_fit_line_avana,
+  dplyr::mutate(Predicted = c(predict(qq_fit_line_avana,
                                split(qq_data, qq_data$Dataset)$Avana %>% dplyr::select(Theoretical)),
                        predict(qq_fit_line_sanger,
                                split(qq_data, qq_data$Dataset)$Sanger %>% dplyr::select(Theoretical))),
@@ -221,9 +221,9 @@ gene.confidence.features <- read_tsv("./data/raw/depmap/gene-confidence-internal
   dplyr::select(-1) %>%
   rename(Gene = gene)
 
-qq_data %>% mutate(entrezgene = convert_cds_to_entrez(Gene)) %>%
+qq_data %>% dplyr::mutate(entrezgene = convert_cds_to_entrez(Gene)) %>%
   left_join(gene.confidence.features %>%
-              mutate(entrezgene = convert_cds_to_entrez(Gene)) %>%
+              dplyr::mutate(entrezgene = convert_cds_to_entrez(Gene)) %>%
               dplyr::select(-Gene), by = "entrezgene") %>%
   ggplot(aes(Var, confidence)) +
   geom_point(alpha = 0.25) +
@@ -231,9 +231,9 @@ qq_data %>% mutate(entrezgene = convert_cds_to_entrez(Gene)) %>%
   facet_wrap(~Dataset)
 
 gene_selection_features <- qq_data %>%
-  mutate(entrezgene = convert_cds_to_entrez(Gene)) %>%
+  dplyr::mutate(entrezgene = convert_cds_to_entrez(Gene)) %>%
   left_join(gene.confidence.features %>%
-              mutate(entrezgene = convert_cds_to_entrez(Gene)) %>%
+              dplyr::mutate(entrezgene = convert_cds_to_entrez(Gene)) %>%
               dplyr::select(-Gene), by = "entrezgene")
 
 # Cache -------------------------------------------------------------------
@@ -248,14 +248,14 @@ ProjectTemplate::cache("gene_selection_features_19q4")
 # Feature selection: max cor ---------------------------------------------
 #List of genes with above-background variance
 total_genes <- gene_selection_features_19q4 %>%
-  filter(Dataset=="Avana", Diff > 0.05)
+  dplyr::filter(Dataset=="Avana", Diff > 0.05)
 
 cor_tmp <- coop::pcor(avana_regressed_19q4[,total_genes$Gene])
 
 diag(cor_tmp) <- NA
 
 total_genes <- total_genes %>%
-  mutate(Max_Cor = matrixStats::rowMaxs(abs(cor_tmp), na.rm = T))
+  dplyr::mutate(Max_Cor = matrixStats::rowMaxs(abs(cor_tmp), na.rm = T))
 
 write_csv(total_genes, file.path(out_path,"genes_above_background_var_features_19q4.csv"))
 
@@ -273,7 +273,7 @@ conf_threshold <- 0.5
 
 
 g1 <- total_genes %>%
-  filter(confidence > conf_threshold) %>%
+  dplyr::filter(confidence > conf_threshold) %>%
   ggplot(aes(Diff, Max_Cor, color = confidence))+ scale_x_log10() + geom_point(alpha = 0.5) +
   geom_hline(yintercept = correlation_threshold) +
   geom_vline(xintercept = diff_threshhold) +
@@ -281,7 +281,7 @@ g1 <- total_genes %>%
 
 
 g2 <- total_genes %>%
-  filter(confidence <= conf_threshold) %>%
+  dplyr::filter(confidence <= conf_threshold) %>%
   ggplot(aes(Diff, Max_Cor, color = confidence))+ scale_x_log10() + geom_point(alpha = 0.5) +
   geom_hline(yintercept = correlation_threshold) +
   geom_vline(xintercept = diff_threshhold) +
@@ -299,7 +299,7 @@ ggsave(g4, filename = file.path(out_path, "low_conf_perturbation.pdf"), width = 
 
 # Filtered Webster input -------------------------------------------------------------------
 avana_19q4_webster <- avana_regressed_19q4[,total_genes %>%
-                                                       filter(confidence > conf_threshold,
+                                                       dplyr::filter(confidence > conf_threshold,
                                                               Max_Cor > correlation_threshold,
                                                               Diff > diff_threshhold) %>%
                                              pull(Gene) %>%

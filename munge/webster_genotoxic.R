@@ -3,8 +3,8 @@
 
 load("./cache/genotoxic_input.RData")
 mat_path <- file.path(".", "data", "interim", "webster_genotoxic_freeze_2021-6-08-durocher-K=10-T=2.mat")
-webster_genotoxic <- graphdl_to_factorized(import_graphdl(R.matlab::readMat(mat_path)), 
-                                        colnames(genotoxic_input), 
+webster_genotoxic <- graphdl_to_factorized(import_graphdl(R.matlab::readMat(mat_path)),
+                                        colnames(genotoxic_input),
                                         rownames(genotoxic_input))
 
 
