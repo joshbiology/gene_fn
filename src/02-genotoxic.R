@@ -155,8 +155,8 @@ tidy_gene_graph <- as_tbl_graph(generate_graph(olivieri_mat[damage_genes,])) %>%
 
 ggraph(tidy_gene_graph) +
   geom_edge_link(color = "gray20", alpha = 0.2) +
-  geom_node_point(size = 2.5, aes(colour = Pathway)) +
-  ggsave(file.path(out_path, "durocher_gene_graph.pdf"), width = 6, height = 5)
+  geom_node_point(size = 2.5, aes(colour = Pathway))
+ggsave(file.path(out_path, "durocher_gene_graph.pdf"), width = 6, height = 5)
 
 tidy_cl_graph <- as_tbl_graph(generate_graph(olivieri_mat[damage_genes,] %>% t()))
 
