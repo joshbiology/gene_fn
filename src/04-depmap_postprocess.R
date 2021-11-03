@@ -14,25 +14,25 @@ create_output_folder(out_path)
 
 
 graph_objective_precomp <- function(factorized_mat, L_mat) {
-  sum(diag(Rfast::Crossprod(factorized_mat,L_mat) %>% 
+  sum(diag(Rfast::Crossprod(factorized_mat,L_mat) %>%
              Rfast::mat.mult(factorized_mat)))
 }
 
 generate_graph <- function(mat, rank = 5) {
   require(igraph)
-  tmp <- cosine_sim(mat) %>% 
+  tmp <- cosine_sim(mat) %>%
     edgeweight_symmetric_rank
-  
+
   tmp[tmp >rank] <- NA
-  
+
   tmp[upper.tri(tmp)] <- NA
-  
+
   tmp[!is.na(tmp)] <- 1
-  
+
   tmp2 <- igraph::graph_from_adjacency_matrix(tmp, mode = "undirected", weighted = NULL)
-  
+
   return((tmp2))
-  
+
 }
 
 
@@ -51,22 +51,22 @@ extract_params <- function(output) {
            Seed = attr(x, 'extras')$seed %>% as.numeric,
            Num_Neigh_Gene = attr(x, 'extras')$num.neighbor.gene[1])
   })
-  
+
 }
 
 generate_metrics <- function(output) {
   params_df <- extract_params(output)
-  
+
   f_norms <- furrr::future_map_dbl(output, function(x) {
     norm(avana_19q4_webster-recon(x), type = c("F"))
   })
-  
-  
+
+
   g_laps <- furrr::future_map_dbl(output, function(x) {
     graph_objective_precomp(x$gene_mat, gene_laplacian)
   })
-  
-  params_df %>% 
+
+  params_df %>%
     mutate(F_Norm = f_norms,
            Gene_Lap  =g_laps)
 }
@@ -78,7 +78,7 @@ gene_laplacian <- igraph::laplacian_matrix(generate_graph(avana_19q4_webster%>% 
 
 # Grid --------------------------------------------------------------------
 #Grid factorization output: many values of K, many values of T, one random seed
-mat_paths <- list("./data/interim/matlab/depmap_grid") %>% 
+mat_paths <- list("./data/interim/matlab/depmap_grid") %>%
   map(~list.files(., pattern = "*.mat", full.names = T)) %>% unlist()
 
 depmap_grid_output <- map(mat_paths, import_graphDL)
@@ -95,21 +95,21 @@ write_tsv(depmap_grid_metrics_df, path = file.path(out_path, "depmap_grid_metric
 #Save space
 rm(depmap_grid_output)
 
-depmap_grid_metrics_df %>% 
-  mutate(Gene_Lap = log(Gene_Lap, 10)) %>% 
-  pivot_longer(names_to = "Metric", values_to = "Value", c(F_Norm, Gene_Lap)) %>% 
-  filter(K < 600) %>% 
+depmap_grid_metrics_df %>%
+  mutate(Gene_Lap = log(Gene_Lap, 10)) %>%
+  pivot_longer(names_to = "Metric", values_to = "Value", c(F_Norm, Gene_Lap)) %>%
+  filter(K < 600) %>%
   ggplot(aes(x = K, y = Value, group = T_param, color = factor(T_param))) +
   geom_point() +
   geom_line() +
-  facet_wrap(~Metric, scales ="free_y", ncol = 2) +
+  facet_wrap(~Metric, scales ="free_y", ncol = 2)
   ggsave(file.path(out_path,"depmap_grid_metrics.pdf"), width = 7, height = 3, device = cairo_pdf)
 
 
 # Wide ------------------------------------------------------------------
 
 #Wide factorization output: many values of K, one value of T, one random seed
-mat_paths <- list("./data/interim/matlab/depmap_wide") %>% 
+mat_paths <- list("./data/interim/matlab/depmap_wide") %>%
   map(~list.files(., pattern = "*.mat", full.names = T)) %>% unlist()
 
 depmap_wide_output <- map(mat_paths, import_graphDL)
@@ -123,29 +123,29 @@ write_tsv(depmap_wide_metrics_df, path = file.path(out_path, "depmap_wide_metric
 #depmap_wide_metrics_df <- read_tsv(file.path(out_path, "depmap_wide_metrics.tsv"))
 
 
-depmap_wide_metrics_df %>% 
-  pivot_longer(names_to = "Metric", values_to = "Value", c(F_Norm, Gene_Lap)) %>% 
+depmap_wide_metrics_df %>%
+  pivot_longer(names_to = "Metric", values_to = "Value", c(F_Norm, Gene_Lap)) %>%
   ggplot(aes(x = K, y = Value)) +
   geom_jitter() +
   geom_smooth() +
   geom_vline(xintercept = 220) +
   xlim(c(0, 600)) +
-  facet_grid( Metric ~Num_Neigh_Gene, scales ="free_y") +
+  facet_grid( Metric ~Num_Neigh_Gene, scales ="free_y")
   ggsave(file.path(out_path,"depmap_wide_metrics_T=4.pdf"), width = 6, height = 10, device = cairo_pdf)
 
-depmap_wide_metrics_df %>% 
-  arrange(K) %>% 
+depmap_wide_metrics_df %>%
+  arrange(K) %>%
   mutate(Diff_F = c(0,diff(F_Norm)),
-         Diff_Gene_L = c(0,diff(Gene_Lap))) %>% 
-  slice(-1) %>% 
-  pivot_longer(names_to = "Metric", values_to = "Value", c("Diff_F", "Diff_Gene_L")) %>% 
-  filter(K < 500) %>% 
+         Diff_Gene_L = c(0,diff(Gene_Lap))) %>%
+  slice(-1) %>%
+  pivot_longer(names_to = "Metric", values_to = "Value", c("Diff_F", "Diff_Gene_L")) %>%
+  filter(K < 500) %>%
   ggplot(aes(x = K, y = Value))+
   geom_vline(xintercept = 220) +
   xlim(c(0, 500)) +
   geom_jitter() +
   geom_smooth() +
-  facet_wrap( Metric ~Num_Neigh_Gene, scales ="free_y") +
+  facet_wrap( Metric ~Num_Neigh_Gene, scales ="free_y")
   ggsave(file.path(out_path,"depmap_wide_marginal_metrics_T=4.pdf"), width = 7, height = 3.5, device = cairo_pdf)
 
 #Save space
@@ -156,7 +156,7 @@ rm(depmap_wide_output)
 
 
 #Deep factorization output: few values of K, one value of T, many random seeds
-mat_paths <- list("./data/interim/matlab/depmap_deep") %>% 
+mat_paths <- list("./data/interim/matlab/depmap_deep") %>%
   map(~list.files(., pattern = "*.mat", full.names = T)) %>% unlist()
 
 depmap_deep_output <- map(mat_paths, import_graphDL)
@@ -169,27 +169,27 @@ write_tsv(depmap_deep_metrics_df, path = file.path(out_path, "depmap_deep_metric
 
 #For reproducibility:
 #depmap_deep_metrics_df <- read_tsv(file.path(out_path, "depmap_deep_metrics.tsv"))
-depmap_deep_metrics_df %>% 
-  pivot_longer(names_to = "Metric", values_to = "Value", c(F_Norm, Gene_Lap)) %>% 
+depmap_deep_metrics_df %>%
+  pivot_longer(names_to = "Metric", values_to = "Value", c(F_Norm, Gene_Lap)) %>%
   ggplot(aes(x = K, y = Value)) +
   geom_jitter() +
   geom_smooth() +
-  facet_grid( Metric ~Num_Neigh_Gene, scales ="free_y") +
+  facet_grid( Metric ~Num_Neigh_Gene, scales ="free_y")
   ggsave(file.path(out_path,"depmap_deep_metrics_T=4.pdf"), width = 6, height = 10, device = cairo_pdf)
 
-grouped_metrics <- depmap_deep_metrics_df %>% 
+grouped_metrics <- depmap_deep_metrics_df %>%
   group_by(K) %>% summarize(Mean_F_Norm = mean(F_Norm), Mean_Gene_Lap = mean(Gene_Lap))
-  
-grouped_metrics %>% 
+
+grouped_metrics %>%
   mutate(Diff_F = c(0,diff(Mean_F_Norm)),
-         Diff_Gene_L = c(0,diff(Mean_Gene_Lap))) %>% 
-  slice(-1) %>% 
-  pivot_longer(names_to = "Metric", values_to = "Value", c("Diff_F", "Diff_Gene_L")) %>% 
-  filter(K < 500) %>% 
+         Diff_Gene_L = c(0,diff(Mean_Gene_Lap))) %>%
+  slice(-1) %>%
+  pivot_longer(names_to = "Metric", values_to = "Value", c("Diff_F", "Diff_Gene_L")) %>%
+  filter(K < 500) %>%
   ggplot(aes(x = K, y = Value))+
   geom_jitter() +
   geom_smooth() +
-  facet_wrap(  ~Metric, ncol = 1, scales ="free_y") +
+  facet_wrap(  ~Metric, ncol = 1, scales ="free_y")
   ggsave(file.path(out_path,"depmap_deep_marginal_metrics_T=4.pdf"), width = 6, height = 10, device = cairo_pdf)
 
 
@@ -205,11 +205,11 @@ pheatmap::pheatmap(tmp2, cluster_cols = F, cluster_rows = F, breaks = seq(-1, 1,
 colnames(avana_19q4_webster)[attr(depmap_deep_output[[71]], "extras")$medoids[,1]]
 
 tibble(Init_Final = init_final_dict_crosscor %>% diag(),
-       Random_Seed = random_seed_crosscor%>% diag()) %>% 
-  pivot_longer(names_to = "Type", values_to = "Cross_Cor", everything()) %>% 
+       Random_Seed = random_seed_crosscor%>% diag()) %>%
+  pivot_longer(names_to = "Type", values_to = "Cross_Cor", everything()) %>%
   ggplot(aes(Cross_Cor)) +
   geom_histogram() +
-  facet_wrap(~Type) +
+  facet_wrap(~Type)
   ggsave(file.path(out_path, "consistency_hist.pdf"), width = 4, height = 1.5)
 
 
@@ -221,33 +221,33 @@ median(init_final_dict_crosscor %>% diag)
 extract_atoms <- function(mat, gene, loading_threshold = 8) {
   # set col names
   colnames(mat) <- paste("V", 1:ncol(mat), sep = "")
-  
+
   gene_loadings <- mat[gene, ]
   col_index <- abs(gene_loadings) > 0
-  
+
   row_tmp <- rowSums(abs(mat[,col_index]))
   row_index <- row_tmp > loading_threshold
-  
-  
+
+
   return(mat[row_index, col_index])
 }
 
 
 generate_seed_heatmaps <- function(gene, output= depmap_deep_output) {
-  
+
   require(RColorBrewer)
   params_df <- output %>% extract_params()
-  heatmap_names <- map(1:length(output), function(x) sprintf("%s_nneigh=%d_k=%d_seed=%d_T=%d_Alpha=%f", 
+  heatmap_names <- map(1:length(output), function(x) sprintf("%s_nneigh=%d_k=%d_seed=%d_T=%d_Alpha=%f",
                                                               gene,
                                                               params_df$Num_Neigh_Gene[x],
                                                               params_df$K[x],
                                                               params_df$Seed[x],
                                                               params_df$T_param[x],
                                                               params_df$Alpha[x]))
-  
 
-  
-  
+
+
+
   heatmaps <- walk(1:length(output), function(x) {
     tmp_mat <- output[[x]]$gene_mat %>% set_rownames(attr( output[[1]], 'gene_names'))
     atoms <- extract_atoms(tmp_mat, gene)
@@ -255,7 +255,7 @@ generate_seed_heatmaps <- function(gene, output= depmap_deep_output) {
                        color = colorRampPalette(rev(brewer.pal(n = 7, name = "RdBu")))(100),
                        filename = sprintf("./output/04-depmap_postprocess/%s.pdf",heatmap_names[x]), width = 6, height = 9)
   })
-  
+
 }
 
 
@@ -264,7 +264,7 @@ genes = c(shoc2 = "SHOC2",
           c7orf26 = "C7orf26",
           ints6 = "INTS6",
           ints12 = "INTS12",
-          tp53 = "TP53", 
+          tp53 = "TP53",
           mtor = "MTOR",
           braf = "BRAF",
           hmgcr = "HMGCR",
@@ -337,11 +337,11 @@ all_genes <- colnames(avana_19q4_webster)
 test_genes <- sample(all_genes, length(all_genes)/4)
 training_genes <- setdiff(all_genes, test_genes)
 
-train_test_df <- list(Test = test_genes, Train = training_genes) %>% 
-  enframe("Group","CDS_ID") %>% 
+train_test_df <- list(Test = test_genes, Train = training_genes) %>%
+  enframe("Group","CDS_ID") %>%
   unnest(CDS_ID)
 
-train_test_df %>% 
+train_test_df %>%
   write_tsv(file.path(out_path, paste(Sys.Date(), "train_test_genes.csv", sep  = "_")))
 
 #For reproducibility:
@@ -360,7 +360,7 @@ avana_19q4_webster_train  <- avana_19q4_webster[,filter(train_test_df, Group == 
 # noise_50 <-  rnorm(length(avana_19q4_webster), sd = 0.50) %>% matrix(nrow = dim(avana_19q4_webster)[1]) %>% set_colnames(colnames(avana_19q4_webster))
 # noise_100 <-  rnorm(length(avana_19q4_webster), sd = 1) %>% matrix(nrow = dim(avana_19q4_webster)[1]) %>% set_colnames(colnames(avana_19q4_webster))
 # noise_150 <-  rnorm(length(avana_19q4_webster), sd = 1.5) %>% matrix(nrow = dim(avana_19q4_webster)[1]) %>% set_colnames(colnames(avana_19q4_webster))
-# 
+#
 # #Exporting noise matrices for reproducibility.
 # export_for_matlab(noise_25, file.path(out_path, "noise_25.csv"))
 # export_for_matlab(noise_50, file.path(out_path, "noise_50.csv"))
@@ -409,7 +409,7 @@ system("bash ./cluster_scripts/denoise.txt")
 
 
 #Import datasets
-mat_paths <- list("./data/interim/matlab/depmap_denoise") %>% 
+mat_paths <- list("./data/interim/matlab/depmap_denoise") %>%
   map(~list.files(., pattern = "*.mat", full.names = T)) %>% unlist()
 
 depmap_denoise_output <- map(mat_paths, ~import_graphDL(., avana_19q4_webster_train))
@@ -418,11 +418,11 @@ denoise_params_df <- extract_params(depmap_denoise_output)
 
 #Write dictionaries to file
 walk(1:length(depmap_denoise_output), function(x) {
-  dict <- depmap_denoise_output[[x]] %>% get_cell_mat %>% 
+  dict <- depmap_denoise_output[[x]] %>% get_cell_mat %>%
     export_for_matlab(file.path(out_path, sprintf("%s_%s.csv", list.files("./data/interim/matlab/depmap_denoise", pattern = "*.mat", full.names = F)[x], x)))
 })
 
-#write script to perform OMP using noisy test data and the noisy trained dictionary. 
+#write script to perform OMP using noisy test data and the noisy trained dictionary.
 omp_params <- tibble(dict_path = map_chr(1:length(depmap_denoise_output), ~file.path(out_path, sprintf("%s_%s.csv", list.files("./data/interim/matlab/depmap_denoise", pattern = "*.mat", full.names = F)[.], .))),
        signal_path = c(rep(file.path(out_path, "avana_19q4_webster_test_noise_0.csv"), 5),
                        rep(file.path(out_path, "avana_19q4_webster_test_noise_100.csv"), 5),
@@ -432,7 +432,7 @@ omp_params <- tibble(dict_path = map_chr(1:length(depmap_denoise_output), ~file.
        omp_file = file.path(out_path, outer(paste(c(0, 100, 150, 25, 50), "denoise_omp", sep = "_"), 1:5, paste, sep = "_") %>% t() %>%  as.vector() %>% paste(".csv", sep = "")))
 
 sys_command <- map_chr(1:nrow(omp_params), function(x){
-  
+
   sprintf("/Applications/MATLAB_R2019b.app/bin/matlab -batch  \"OMP_wrapper('%s', '%s', '%s', %d);exit\"",
           omp_params[[x,1]],
           omp_params[[x,2]],
@@ -446,34 +446,34 @@ cat(sys_command, sep = '\n',file=file.path(".", "cluster_scripts", paste("denois
 system("bash ./cluster_scripts/denoise_omp.txt")
 
 #Read OMP matrices
-denoise_omp <- list.files(out_path, pattern = "*denoise_omp*", full.names = T) %>% 
+denoise_omp <- list.files(out_path, pattern = "*denoise_omp*", full.names = T) %>%
   map(~read_csv(., col_names = test_genes) %>% as.matrix)
 
 test_recon <- map2(depmap_denoise_output, denoise_omp, ~ get_cell_mat(.x) %*% .y)
 
-noisy_pearson_df <- map_dfr(test_recon, function(x) tibble(Gene = test_genes, 
-                                                       Pearson_Recon = map_dbl(1:length(test_genes), ~cor(avana_19q4_webster_test[,.], x[,.]))), .id = "ID") %>% 
-  left_join(tibble(ID = as.character(1:25), Noise_Level = rep(c(0, 100, 150, 25, 50), each = 5), Seed = rep(1:5, 5))) %>% 
-  group_by(Noise_Level, Gene) %>% 
+noisy_pearson_df <- map_dfr(test_recon, function(x) tibble(Gene = test_genes,
+                                                       Pearson_Recon = map_dbl(1:length(test_genes), ~cor(avana_19q4_webster_test[,.], x[,.]))), .id = "ID") %>%
+  left_join(tibble(ID = as.character(1:25), Noise_Level = rep(c(0, 100, 150, 25, 50), each = 5), Seed = rep(1:5, 5))) %>%
+  group_by(Noise_Level, Gene) %>%
   summarize(Mean_Pearson = mean(Pearson_Recon))
 
 
-noisy_pearson_df %>% 
-  group_by(Noise_Level) %>% 
-  mutate(Mean = mean(Mean_Pearson)) %>% 
+noisy_pearson_df %>%
+  group_by(Noise_Level) %>%
+  mutate(Mean = mean(Mean_Pearson)) %>%
   ungroup() %>%
-  mutate(Noise_Level = factor(Noise_Level, labels = c("σ=0", "σ=0.25", "σ=0.5", "σ=1", "σ=1.5"))) %>% 
-  ggplot(aes(x = Mean_Pearson)) + 
-  geom_density(fill = "gray90") + 
+  mutate(Noise_Level = factor(Noise_Level, labels = c("σ=0", "σ=0.25", "σ=0.5", "σ=1", "σ=1.5"))) %>%
+  ggplot(aes(x = Mean_Pearson)) +
+  geom_density(fill = "gray90") +
   geom_vline(aes(xintercept = Mean), color = "red", linetype = "dashed") +
-  facet_wrap(~Noise_Level, ncol = 1) +
+  facet_wrap(~Noise_Level, ncol = 1)
   ggsave(file.path(out_path, "denoise.pdf"), width =3, height = 4, device = cairo_pdf)
 
 
 
 # Section III: Transferability  --------------------------------------------------
 
-#use dense factorized output to generate Sanger recoveries. 
+#use dense factorized output to generate Sanger recoveries.
 source("./munge/webster_depmap.R")
 
 load("./cache/sanger_regressed_19q4.RData")
@@ -499,7 +499,7 @@ sprintf("/Applications/MATLAB_R2019b.app/bin/matlab -batch  \"OMP_wrapper('%s', 
         file.path(out_path, "sanger_dict.csv"),
         file.path(out_path, "sanger_signal.csv"),
         file.path(out_path, "sanger_omp.csv"),
-        4) %>% 
+        4) %>%
   cat(file = file.path(".", "cluster_scripts", "sanger.txt"))
 
 system("bash ./cluster_scripts/sanger.txt")
@@ -508,7 +508,7 @@ sprintf("/Applications/MATLAB_R2019b.app/bin/matlab -batch  \"OMP_wrapper('%s', 
         file.path(out_path, "sanger_dict_shuffled.csv"),
         file.path(out_path, "sanger_signal.csv"),
         file.path(out_path, "sanger_omp_shuffled.csv"),
-        4) %>% 
+        4) %>%
   cat(file = file.path(".", "cluster_scripts", "sanger_shuffled.txt"))
 
 system("bash ./cluster_scripts/sanger_shuffled.txt")
@@ -517,7 +517,7 @@ sprintf("/Applications/MATLAB_R2019b.app/bin/matlab -batch  \"OMP_wrapper('%s', 
         file.path(out_path, "sanger_dict.csv"),
         file.path(out_path, "avana_signal.csv"),
         file.path(out_path, "avana_omp.csv"),
-        4) %>% 
+        4) %>%
   cat(file = file.path(".", "cluster_scripts", "avana.txt"))
 
 system("bash ./cluster_scripts/avana.txt")
@@ -532,20 +532,18 @@ recon_sanger <- common_dict%*% sanger_omp
 
 recon_sanger_shuffled <- common_dict[shuffle_1,]%*% sanger_omp_shuffled
 
-recon_df <- tibble(Gene= common_genes, 
+recon_df <- tibble(Gene= common_genes,
                    Sanger_Recon_Pearson = map_dbl(common_genes, ~cor(sanger_signal[,.], recon_sanger[,.])),
                    Shuffled_Recon_Pearson = map_dbl(common_genes, ~cor(sanger_signal[common_cl,.], recon_sanger_shuffled[common_cl,.])),
                    Avana_Recon_Pearson =  map_dbl(common_genes, ~cor(avana_19q4_webster[common_cl,.], recon_avana[common_cl,.])))
 
-recon_df %>% 
-  pivot_longer(names_to = "Metric", values_to = "Value", -Gene) %>% 
-  group_by(Metric) %>% 
-  mutate(Mean = mean(Value)) %>% 
-  ungroup() %>% 
+recon_df %>%
+  pivot_longer(names_to = "Metric", values_to = "Value", -Gene) %>%
+  group_by(Metric) %>%
+  mutate(Mean = mean(Value)) %>%
+  ungroup() %>%
   ggplot(aes(Value)) +
-  geom_density(fill = "gray90") + 
+  geom_density(fill = "gray90") +
   geom_vline(aes(xintercept = Mean), color = "red", linetype = "dashed") +
   facet_wrap(~Metric, ncol = 1, scales = "free_y") +
   ggsave(file.path(out_path, "density_recon_sanger.pdf"), width =3, height = 3)
-
-        
