@@ -19,7 +19,7 @@ genesets_df <-  default_genesets %>%
 #https://biomart.genenames.org
 
 hugo_df <- read_tsv("./data/raw/hugo_gene_families.txt") %>%
-  select(2, 3, 8) %>%
+  dplyr::select(2, 3, 8) %>%
   set_colnames(c("Geneset", "Root_Symbol", "symbol"))
 
 #Individual features
@@ -29,7 +29,7 @@ ints_genesets <- genesets_df %>%
                         "Z3",
                         "Integrator"),
          Process == "top_hits") %>%
-  select(Geneset, symbol)
+  dplyr::select(Geneset, symbol)
 
 dynein_genesets <- genesets_df %>%
   dplyr::filter(Geneset %in% c(#"Dynein",
@@ -38,7 +38,7 @@ dynein_genesets <- genesets_df %>%
     "Dynactin",
     "SKA")) %>%
   dplyr::filter(!is.na(symbol)) %>%
-  select(Geneset, symbol)
+  dplyr::select(Geneset, symbol)
 
 pausing_genesets <- rbind(genesets_df %>%
                             dplyr::filter(Geneset %in% c("DSIF", "PAF")) %>%
@@ -52,7 +52,7 @@ pausing_genesets <- rbind(genesets_df %>%
 
 mediator_genesets <- genesets_df %>%
   dplyr::filter(Process == "mediator_head_middle_ckm") %>%
-  select(Geneset, symbol)
+  dplyr::select(Geneset, symbol)
 
 
 baf_genesets <- genesets_df %>%

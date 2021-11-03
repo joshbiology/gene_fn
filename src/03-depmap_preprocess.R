@@ -77,7 +77,7 @@ regress_nnmd <- function(gene_effect_matrix, cell_line_names, nnmd_values) {
 
 # Import and remove NA's from 20Q2 -------------------------------------------------------------
 gene_effect_19q4 <- read_tsv("./data/raw/depmap/public-19q4_v23-achilles-gene-effect.tsv") %>%
-  column_to_rownames("X1") %>%
+  column_to_rownames("...1") %>%
   as.matrix()
 
 query_na(gene_effect_19q4)
@@ -101,7 +101,7 @@ avana_tmp <- remove_nuisance_genes(tmp2)
 
 #Import and remove any genes with NA's
 sanger <- read_tsv("./data/raw/depmap/sanger-crispr-project-score-_v4-gene-effect.tsv") %>%
-  column_to_rownames("X1") %>%
+  column_to_rownames("...1") %>%
   as.matrix() %>%
   remove.cols.any.nas()
 
