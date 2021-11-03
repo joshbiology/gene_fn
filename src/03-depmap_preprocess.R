@@ -123,7 +123,7 @@ sanger_centered <- center_cell_lines(sanger_arm_corrected)
 
 # Regress out NNMD and scale cell lines ------------------------------------
 #For Avana
-sample_info_19q4 <- taigr::load.from.taiga(data.name='public-19q4-93d9', data.version=23, data.file='sample_info')
+sample_info_19q4 <- read_csv("./data/raw/depmap/public-19q4_v23-sample-info.tsv")
 avana_regressed <- regress_nnmd(avana_centered, sample_info_19q4$DepMap_ID, sample_info_19q4$cell_line_NNMD)
 
 
