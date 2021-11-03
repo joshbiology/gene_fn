@@ -73,7 +73,7 @@ dict_mat %>% as_tibble %>%
 
 #Dictionary
 pheatmap(dict_mat[(order(dict_mat[,1]-dict_mat[,2])),], cluster_cols = F, cluster_rows = F, colorRampPalette(c("red", "white"))(100),
-         filename = "./output/figures/synthetic_dict.pdf", width = 2, height = 10)
+         filename = file.path(out_path,"synthetic_dict.pdf"), width = 2, height = 10)
 
 
 code_mat <- rbind(c(rep(2, 40), rep(0, 40), rep(1, 20)),
