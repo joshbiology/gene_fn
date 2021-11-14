@@ -137,14 +137,11 @@ pca_to_factorized <- function(out, gene_names, cell_names, rank) {
 fastICA_to_factorized <- function(out, gene_names, cell_names) {
   method <- "fastICA"
   
-  source_mat <- out$S
-  mixing_mat <- out$A
+  gene_mat <- out$S
+  cell_mat <- out$A
   extras <- out[names(out)[!(names(out) %in% c("A", "S"))]]
   
-  rank <- ncol(source_mat)
-  
-  gene_mat <- source_mat
-  cell_mat <- mixing_mat
+  rank <- ncol(gene_mat)
   
   stopifnot(dim(gene_mat)[1] == length(gene_names))
   stopifnot(dim(cell_mat)[1] == length(cell_names))
@@ -172,7 +169,7 @@ graphdl_to_factorized <- function(out, gene_names, cell_names) {
   stopifnot(dim(gene_mat)[1] == length(gene_names))
   stopifnot(dim(cell_mat)[1] == length(cell_names))
   
-  rank = as.integer(dim(gene_mat)[2])
+  rank <- as.integer(dim(gene_mat)[2])
   
   factorized(gene_mat,
              cell_mat,
@@ -194,7 +191,7 @@ ksvd_to_factorized <- function(out, gene_names, cell_names) {
   stopifnot(dim(gene_mat)[1] == length(gene_names))
   stopifnot(dim(cell_mat)[1] == length(cell_names))
   
-  rank = as.integer(dim(gene_mat)[2])
+  rank <- as.integer(dim(gene_mat)[2])
   
   factorized(gene_mat,
              cell_mat,
