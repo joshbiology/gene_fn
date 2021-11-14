@@ -542,7 +542,7 @@ pc_dim <- quick.elbow(pc$sdev^2)
 
 plot(pc, type = "lines", npcs = 31)
 
-pca_factor <- pca_to_factorized(pc, pc_dim)
+pca_factor <- pca_to_factorized(pc, damage_genes, olivieri_mat %>% colnames()), pc_dim)
 
 
 #ICA
@@ -570,7 +570,7 @@ mstd_df %>%
   geom_vline(xintercept = 13, color = "red", linetype = "dashed")
   ggsave(file.path(out_path, "mstd_durocher.pdf"), width = 5, height = 4)
 
-ica_factor <- fastICA_to_factorized(ics[[which(K_param == 10)]])
+ica_factor <- fastICA_to_factorized(ics[[which(K_param == 10)]], damage_genes, olivieri_mat %>% colnames()))
 
 
 
