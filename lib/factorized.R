@@ -2,7 +2,6 @@
 
 
 # Factorization class -----------------------------------------------------
-#Factorization class - scalar object - list represents one thing
 
 #Constructor: efficiently creates new objects with the correct structure
 new_factorized <- function(gene_mat = double(),
