@@ -246,3 +246,5 @@ get_cell_mat <- function(x) {
   return(out)
 }
 
+
+#might need something here to give objects a name based on some of the parameters that it was run on.
