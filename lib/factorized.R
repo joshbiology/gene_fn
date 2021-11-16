@@ -78,7 +78,7 @@ validate_factorized <- function(x) {
     )
   }
   
-  x
+  return(x)
 }
 
 # Helper ------------------------------------------------------------------
@@ -108,10 +108,7 @@ factorized <- function(gene_mat = double(),
 
 #Subhelpers: individual conversion functions for specific factorization methods
 
-pca_to_factorized <- function(out, rank) {
-  #Right now, this is assuming an orientation in which the genes are the samples and the cell lines are the columns. 
-  #If this changes, I'll have to change this function.
-  #Genes IID, Cell lines as features
+pca_to_factorized <- function(out, gene_names, cell_names, rank) {
   rank <- as.integer(rank)
   
   method <- "PCA"
@@ -120,8 +117,8 @@ pca_to_factorized <- function(out, rank) {
   gene_mat <- out$x[,1:rank]
   extras <- out[c("sdev", "center", "scale")]
   
-  gene_names <- rownames(gene_mat)
-  cell_names <- rownames(cell_mat)
+  stopifnot(dim(gene_mat)[1] == length(gene_names))
+  stopifnot(dim(cell_mat)[1] == length(cell_names))
   
   #Clear metadata from matrices
   attr(gene_mat, "dimnames") <- NULL
@@ -137,133 +134,21 @@ pca_to_factorized <- function(out, rank) {
 }
 
 #For Icasso stabilized ICA
-fastICA_to_factorized <- function(out) {
+fastICA_to_factorized <- function(out, gene_names, cell_names) {
   method <- "fastICA"
-  source_mat <- out$S
-  mixing_mat <- out$A
+  
+  gene_mat <- out$S
+  cell_mat <- out$A
   extras <- out[names(out)[!(names(out) %in% c("A", "S"))]]
   
-  rank <- ncol(source_mat)
+  rank <- ncol(gene_mat)
   
-  #Right now, all assumptions are that # cell lines < # genes. This may change in future.
-  #Genes IID, Samples as features
-  
-  if (nrow(source_mat) > nrow(mixing_mat)) {
-    gene_mat <- source_mat
-    cell_mat <- mixing_mat
-  }
-  
-  #Samples IID, Genes as features
-  else {
-    cell_mat <- source_mat
-    gene_mat <- mixing_mat
-  }
-  
-  gene_names <- rownames(gene_mat)
-  
-  cell_names <- rownames(cell_mat)
+  stopifnot(dim(gene_mat)[1] == length(gene_names))
+  stopifnot(dim(cell_mat)[1] == length(cell_names))
   
   #Clear metadata from matrices
   attr(gene_mat, "dimnames") <- NULL
   attr(cell_mat, "dimnames") <- NULL
-
-  factorized(gene_mat,
-             cell_mat,
-             rank,
-             method,
-             gene_names,
-             cell_names,
-             extras)
-}
-
-#For Unstable ICA
-
-reg_fastICA_to_factorized <- function(out) {
-  method <- "fastICA_regular"
-  source_mat <- out$S
-  mixing_mat <- out$A %>% t()
-  extras <- out[names(out)[!(names(out) %in% c("A", "S"))]]
-  
-  rank <- ncol(source_mat)
-  
-  #Right now, all assumptions are that # cell lines < # genes. This may change in future.
-  #Genes IID, Samples as features
-  
-  if (nrow(source_mat) > nrow(mixing_mat)) {
-    gene_mat <- source_mat
-    cell_mat <- mixing_mat
-  }
-  
-  #Samples IID, Genes as features
-  else {
-    cell_mat <- source_mat
-    gene_mat <- mixing_mat
-  }
-  
-  gene_names <- rownames(gene_mat)
-  
-  cell_names <- colnames(out$X)
-  
-  #Clear metadata from matrices
-  attr(gene_mat, "dimnames") <- NULL
-  attr(cell_mat, "dimnames") <- NULL
-  
-  factorized(gene_mat,
-             cell_mat,
-             rank,
-             method,
-             gene_names,
-             cell_names,
-             extras)
-}
-
-rica_to_factorized <- function(out, gene_names, cell_names) {
-  method <- "RICA"
-  rank <- out$k %>% as.integer()
-  gene_mat <- out$z %>% t()
-  cell_mat <- out$W
-  extras <- out[c("lambda", "recon", "mse")]
-  
-  factorized(gene_mat,
-             cell_mat,
-             rank,
-             method,
-             gene_names,
-             cell_names,
-             extras)
-}
-
-sparsepca_to_factorized <- function(out, names, orientation = c("gene", "cell")) {
-  
-  stopifnot(orientation %in% c("gene", "cell"))
-  
-  method <- "sparsePCA"
-  
-  if (orientation == "cell") {
-    
-    gene_mat <- out$loadings
-    cell_mat <- out$scores
-    rank <- ncol(gene_mat)
-    
-    cell_names <- rownames(cell_mat)
-    gene_names <- names
-    #Clear metadata from matrices
-    attr(cell_mat, "dimnames") <- NULL
-  }
-  
-  else if (orientation == "gene") {
-    
-    gene_mat <- out$scores
-    cell_mat <- out$loadings
-    rank <- ncol(gene_mat)
-    
-    gene_names <- rownames(gene_mat)
-    cell_names <- names
-    #Clear metadata from matrices
-    attr(gene_mat, "dimnames") <- NULL
-  }
-  
-  extras <- out[names(out)[!(names(out) %in% c("A", "S"))]]
 
   factorized(gene_mat,
              cell_mat,
@@ -284,7 +169,7 @@ graphdl_to_factorized <- function(out, gene_names, cell_names) {
   stopifnot(dim(gene_mat)[1] == length(gene_names))
   stopifnot(dim(cell_mat)[1] == length(cell_names))
   
-  rank = as.integer(dim(gene_mat)[2])
+  rank <- as.integer(dim(gene_mat)[2])
   
   factorized(gene_mat,
              cell_mat,
@@ -306,7 +191,7 @@ ksvd_to_factorized <- function(out, gene_names, cell_names) {
   stopifnot(dim(gene_mat)[1] == length(gene_names))
   stopifnot(dim(cell_mat)[1] == length(cell_names))
   
-  rank = as.integer(dim(gene_mat)[2])
+  rank <- as.integer(dim(gene_mat)[2])
   
   factorized(gene_mat,
              cell_mat,
@@ -360,5 +245,6 @@ get_cell_mat <- function(x) {
   colnames(out) <- paste("V", 1:x$rank, sep = "")
   return(out)
 }
+
 
 #might need something here to give objects a name based on some of the parameters that it was run on.
