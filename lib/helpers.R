@@ -1,8 +1,11 @@
+#create_output_folder -- 
+#simple function that checks for the existence of a folder before creating it.
 create_output_folder <- function(out_path) {
   ifelse(!dir.exists(out_path), dir.create(out_path, recursive = TRUE), FALSE)
 }
 
-
+#export_for_matlab -- 
+#strips attributes from matrix before saving it at out_file.
 export_for_matlab <- function(mat, out_file) {
   #Strip row and col names
   #Correct export params only avail for write.table
@@ -16,11 +19,13 @@ export_for_matlab <- function(mat, out_file) {
   
 }
 
+#normalize_cols -- 
 normalize_cols <- function(x) {
   x %*% diag(1/sqrt(colSums(x * x)))
 }
 
-
+#umap_to_df -- 
+#Simple conversion tool for umap objects returned by the umap package.
 umap_to_df <- function(umap_obj, rowname) {
   umap_obj$layout %>% 
     as.data.frame() %>% 
@@ -28,7 +33,9 @@ umap_to_df <- function(umap_obj, rowname) {
   
 }
 
-
+#edgeweight_symmetric_rank -- 
+#Takes a matrix as input and outputs a matrix of same dimensions, 
+#but with values that are replaced by symmetric ranked edgeweights.
 edgeweight_symmetric_rank <- function(mat, rank_method = "maximal") {
   edge_rank <- mat
   diag(edge_rank) <- NA
@@ -48,6 +55,27 @@ edgeweight_symmetric_rank <- function(mat, rank_method = "maximal") {
   return(edge_rank)
 }
 
+
+#generate_graph -- 
+#Takes a matrix as input and outputs a graph with edges between nearest neighbors (cosine similarity).
+
+generate_graph <- function(mat, rank = 5) {
+  
+  tmp <- cosine_sim(mat) %>%
+    edgeweight_symmetric_rank
+  
+  tmp[tmp >rank] <- NA
+  
+  tmp[upper.tri(tmp)] <- NA
+  
+  tmp[!is.na(tmp)] <- 1
+  
+  tmp2 <- igraph::graph_from_adjacency_matrix(tmp, mode = "undirected", weighted = NULL)
+  
+  return((tmp2))
+  
+}
+
 # Dual graph regularized dictionary learning (DGRDL) utils ------------------------
 import_graphdl <- function(matlab_obj) {
   
@@ -61,4 +89,6 @@ import_graphdl <- function(matlab_obj) {
        D = D,
        X = X)
 }
+
+
 

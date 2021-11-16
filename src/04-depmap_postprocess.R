@@ -17,23 +17,6 @@ graph_objective_precomp <- function(factorized_mat, L_mat) {
              Rfast::mat.mult(factorized_mat)))
 }
 
-generate_graph <- function(mat, rank = 5) {
-  require(igraph)
-  tmp <- cosine_sim(mat) %>%
-    edgeweight_symmetric_rank
-
-  tmp[tmp >rank] <- NA
-
-  tmp[upper.tri(tmp)] <- NA
-
-  tmp[!is.na(tmp)] <- 1
-
-  tmp2 <- igraph::graph_from_adjacency_matrix(tmp, mode = "undirected", weighted = NULL)
-
-  return((tmp2))
-
-}
-
 
 import_graphDL  <- function(x, input = avana_19q4_webster) {
   tmp <- R.matlab::readMat(x)

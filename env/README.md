@@ -1,0 +1,2 @@
+# Env
+This directory contains scripts for setting up the environment for first time users. It contains the Dockerfile info we used for dockerization. It also contains a setup_project.R script that checks installed packages, creates output directories, etc.

@@ -1,13 +1,15 @@
 
 #Designed for writing shell scripts that operate Webster runs
-
-#The core algorithm behind Webster (DGRDL) is a Matlab script. I wrote a wrapper
-#for that script to accept parameters used in Webster.
-
+#Note to users:
+#These scripts were useful during development by running Webster automatically over many parameters. 
 #If you are using the repo to generate figures, you can skip this code, since all the relevant
 #outputs are already in the "data/interim" folder.
 
-#If you're trying to run Webster on your own cluster, this may be relevant to your interests though.
+#If you're trying to run Webster on your own cluster, this may be relevant to your interests as you
+#can customize your environment information and generate new scripts.
+
+#The core algorithm behind Webster (DGRDL) is a Matlab script. I wrote a wrapper
+#for that script to accept parameters used in Webster.
 
 #There are machine specific dependencies to think about in the following, including:
 #1. Where is your matlab path?
