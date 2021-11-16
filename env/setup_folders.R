@@ -1,6 +1,4 @@
 #create folders
-library(ProjectTemplate)
-load.project()
 
 
 all_folders <- list(file.path(".", "output"),
@@ -16,4 +14,4 @@ all_folders <- list(file.path(".", "output"),
                     file.path(".", "output", "09-projection"),
                     file.path(".", "output", "supplement"),
                     file.path(".", "output", "portal_assets"))
-walk(all_folders, create_output_folder)
+purrr::walk(all_folders, create_output_folder)

@@ -80,8 +80,23 @@ BiocManager::install(c("AnnotationDbi",
                        "mygene", 
                        "S4Vectors"))
 
+### Gather data
+#At this stage, you can either
+#1. download the data manually:
+#https://figshare.com/articles/dataset/Data_for_reproducing_Webster_figures/14960006
+#and putting it into a directory called gene_fn/data
+
+#2. You can run gene_fn/load_data.sh, which is used by the Dockerfile to do the same as #1 above.
+
 
 ### Test load the package
 
 library(ProjectTemplate)
 load.project()
+
+#The load.project command should run without errors. It may ask you to perform migrate.project() if it is missing any folders etc.
+
+
+
+### Setup folders
+source("./env/setup_folders.R")
