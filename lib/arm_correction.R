@@ -4,7 +4,7 @@ arm_correct <- function(dataset) {
   #Correction vector is gene median - arm median.
   
   source("./lib/gene_id_conversion.R")
-  load('./cache/arm_df.RData')
+  arm_df <- read_tsv('./data/raw/arm_df.tsv')
   
   #If there are two locations, filter to the first one in the list.
   #Only affects a few poorly characterized and potentially artifactual orfs.
