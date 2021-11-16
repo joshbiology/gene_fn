@@ -63,6 +63,24 @@ if (length(setdiff(pkgs, installed_pkgs)) > 0) {
   install.packages(pkgs = setdiff(pkgs, installed_pkgs))
 }
 
+### Bioc
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(version = "3.14")
+
+BiocManager::install(c("AnnotationDbi", 
+                       "Biobase", 
+                       "BiocGenerics", 
+                       "biomaRt", 
+                       "fgsea", 
+                       "GenomeInfoDb", 
+                       "GenomicFeatures", 
+                       "GenomicRanges", 
+                       "IRanges", 
+                       "mygene", 
+                       "S4Vectors"))
+
+
 ### Test load the package
 
 library(ProjectTemplate)
