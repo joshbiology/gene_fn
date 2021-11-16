@@ -89,6 +89,11 @@ BiocManager::install(c("AnnotationDbi",
 #2. You can run gene_fn/load_data.sh, which is used by the Dockerfile to do the same as #1 above.
 
 
+### Setup folders
+source("./env/setup_folders.R")
+
+
+
 ### Test load the package
 
 library(ProjectTemplate)
@@ -98,5 +103,19 @@ load.project()
 
 
 
-### Setup folders
-source("./env/setup_folders.R")
+### Setup graphics
+#https://www.andrewheiss.com/blog/2017/09/27/working-with-r-cairo-graphics-custom-fonts-and-ggplot/
+#Many plots use cairo_pdf to export rich PDF graphics.
+#There are different setup requirements on Windows, R and Linux.
+#If you are seeing plots not show up, and errors that look like this, you might need to install X11 (Linux or Mac)
+
+#Example warning 1:
+#In grSoftVersion() :
+#  unable to load shared object '/usr/local/lib/R/modules//R_X11.so':
+#  libXt.so.6: cannot open shared object file: No such file or directory
+
+#Example warning 2:
+#In (function (filename = if (onefile) "Rplots.pdf" else "Rplot%03d.pdf",  ... :
+#               failed to load cairo DLL
+              
+#We have taken care of this in our Docker dependencies, so if you're using Docker this should be fine.

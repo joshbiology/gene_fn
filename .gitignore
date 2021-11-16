@@ -36,4 +36,5 @@ vignettes/*.pdf
 *.DS_Store
 data
 output
+cache
 *.zip

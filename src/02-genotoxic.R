@@ -6,31 +6,16 @@ out_path <- file.path(".", "output", "02-genotoxic")
 create_output_folder(out_path)
 
 # Functions ---------------------------------------------------------------
-
-
-generate_graph <- function(mat, rank = 5) {
-
-  tmp <- cosine_sim(mat) %>%
-    edgeweight_symmetric_rank
-
-  tmp[tmp >rank] <- NA
-
-  tmp[upper.tri(tmp)] <- NA
-
-  tmp[!is.na(tmp)] <- 1
-
-  tmp2 <- igraph::graph_from_adjacency_matrix(tmp, mode = "undirected", weighted = NULL)
-
-  return((tmp2))
-
-}
-
+#graph_objective --
+#Calculate a graph laplacian objective given a compressed matrix and the original matrix
 graph_objective <- function(factorized_mat, orig_mat) {
   sum(diag(t(factorized_mat) %*%
              (igraph::laplacian_matrix(generate_graph(orig_mat))) %*%
              factorized_mat))
 }
 
+#flip_max_cols --
+#Change direction of matrix columns so that the highest value in the column is positive.
 flip_max_cols <- function(source_mat) {
   flip_index <- abs(matrixStats::colMaxs(source_mat))-abs(matrixStats::colMins(source_mat))
   flip_index[flip_index < 0] <- -1
@@ -43,7 +28,8 @@ flip_max_cols <- function(source_mat) {
   return(out)
 }
 
-
+#quick.elbow -- open source function from bigpca R package.
+#designed to help compute number of PC's to grab from PCA
 #https://rdrr.io/cran/bigpca/src/R/bigpca.R
 quick.elbow <- function(varpc,low=.08,max.pc=.9) {
   ee <- varpc/sum(varpc) # ensure sums to 1
@@ -177,6 +163,8 @@ ProjectTemplate::cache("genotoxic_input")
 export_for_matlab(olivieri_mat[damage_genes,] %>% t(), "./output/02-genotoxic/durocher_matlab.csv")
 
 #Run DGRDL using written script
+#gene_fun/cluster_scripts/genotoxic_batch.txt.
+#The output of this script is saved in the interim folder, which we load below.
 
 #Factorization output
 mat_paths <- list("./data/interim/matlab/durocher", "./data/interim/matlab/durocher_no_graph") %>%
@@ -251,6 +239,7 @@ ggsave(file.path(out_path, "durocher_graphdl_cl_lap.pdf"), width = 7, height = 3
 
 
 # Set up Webster genotoxic  -----------------------------------------------------------------
+#This setup contains automatic naming features etc. necesssary for plotting.
 source("./munge/webster_genotoxic.R")
 
 # Portal export -----------------------------------------------------------
@@ -263,6 +252,7 @@ get_gene_mat(webster_genotoxic)[,function_order] %>%
   write_tsv(file.path(out_path, "durocher_inferred_functions.tsv"))
 
 #Export for portal
+#Make sure the portal assets folder exists. This should be taken care of by gene_fn/env/setup_project.R.
 webster_genotoxic %>% get_gene_mat() %>%
   as_tibble(rownames = "Name") %>%
   write_tsv(file.path(".", "output", "portal_assets", "durocher_gene_to_function.tsv"))
@@ -542,7 +532,7 @@ pc_dim <- quick.elbow(pc$sdev^2)
 
 plot(pc, type = "lines", npcs = 31)
 
-pca_factor <- pca_to_factorized(pc, damage_genes, olivieri_mat %>% colnames()), pc_dim)
+pca_factor <- pca_to_factorized(pc, damage_genes, olivieri_mat %>% colnames(), pc_dim)
 
 
 #ICA
@@ -570,7 +560,7 @@ mstd_df %>%
   geom_vline(xintercept = 13, color = "red", linetype = "dashed")
   ggsave(file.path(out_path, "mstd_durocher.pdf"), width = 5, height = 4)
 
-ica_factor <- fastICA_to_factorized(ics[[which(K_param == 10)]], damage_genes, olivieri_mat %>% colnames()))
+ica_factor <- fastICA_to_factorized(ics[[which(K_param == 10)]], damage_genes, olivieri_mat %>% colnames())
 
 
 
