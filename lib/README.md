@@ -1,4 +1,4 @@
-#Lib
+# Lib
 
 ProjectTemplate folder for any files that provide useful functionality for your work, but do not constitute a statistical analysis per se. 
 
