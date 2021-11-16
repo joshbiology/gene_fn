@@ -1,1 +1,0 @@
-/Applications/MATLAB_R2019b.app/bin/matlab -batch  "OMP_wrapper('./output/04-depmap_postprocess/sanger_dict.csv', './output/04-depmap_postprocess/sanger_signal.csv', './output/04-depmap_postprocess/sanger_omp.csv', 4);exit"
