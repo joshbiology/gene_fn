@@ -18,4 +18,6 @@ RUN ["install2.r", "-r https://bioconductor.org/packages/3.10/bioc -r https://bi
 
 RUN ["installGithub.r", "r-lib/scales@a33f8ef9d2930f4940f9c694ba6ba79480965cec", "ropensci/plotly@a689263996ae0938c2f18987877924178dba9cf6", "rstudio/renv@48b65fc927fa975971e480dc58f44d86f2243208"]
 
+RUN apt-get install libxtst6 -y
+
 WORKDIR /gene_fn/
