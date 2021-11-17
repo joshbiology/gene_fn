@@ -37,13 +37,22 @@ softmax <- function(par){
 
 # Gene and Factor UMAP ----------------------------------------------------
 
+#Code is here for reproducing the plotting logic. Due to random variation in UMAP, plots may be
+#slightly different depending on the seed. For full reproducibility with the manuscript,
+#I've included the UMAP embeddings for figure generation in the FigShare:
+#https://figshare.com/articles/dataset/Webster_Supplemental_Output/14963561?file=29073846
+#This FigShare file, depmap_umap.tsv, takes the place of plotting_df below.
+
 source("./munge/webster_depmap.R")
 
 combo <- cbind(webster_depmap %>% get_cell_mat %>% set_colnames(paste("V", 1:ncol(.), sep = "")), avana_19q4_webster)
 
+#Run and cache UMAP
 depmap_umap <- umap(combo %>% t(), metric = 'pearson', n_neighbors = 10, random_state =1.1)
-
 ProjectTemplate::cache("depmap_umap")
+
+#Load UMAP
+load("./data/interim/depmap_umap.RData")
 
 plotting_df <- depmap_umap$layout %>%
   as_tibble(rownames = "Name") %>%
@@ -52,12 +61,7 @@ plotting_df <- depmap_umap$layout %>%
   rename(X = V1, Y = V2) %>%
   dplyr::mutate(Y = -Y)
 
-ProjectTemplate::cache("plotting_df")
-
-#For reproducibility:
-#load("./cache/plotting_df.RData")
-
-write_tsv(plotting_df, path = file.path(out_path, "depmap_embedding.tsv"))
+write_tsv(plotting_df, file = file.path(out_path, "depmap_embedding.tsv"))
 
 # Individual plots --------------------------------------------------------
 
@@ -67,34 +71,39 @@ plotting_df %>%
   ggplot(aes(X, Y)) +
   geom_point(data = subset(plotting_df, Type == "Gene"), size = 0.5, alpha = 0.3, color = "gray70") +
   geom_point(data = subset(plotting_df, Type == "Function"),size = 1, shape = 17)
-  ggsave(filename = file.path(out_path, "depmap_embedding.pdf"), width = 5, height = 5, device = cairo_pdf)
 
-#Joint embedding void teme
+ggsave(filename = file.path(out_path, "depmap_embedding.pdf"), width = 5, height = 5, device = cairo_pdf)
+
+#Joint embedding void theme
 plotting_df %>%
   ggplot(aes(X, Y)) +
   geom_point(data = subset(plotting_df, Type == "Gene"), size = 0.5, alpha = 0.3, color = "gray80") +
   geom_point(data = subset(plotting_df, Type == "Function"),size = 1, shape = 17) +
   theme_void()
-  ggsave(filename = file.path(out_path, "depmap_embedding_void.pdf"), width = 4, height = 4, device = cairo_pdf)
+
+ggsave(filename = file.path(out_path, "depmap_embedding_void.pdf"), width = 4, height = 4, device = cairo_pdf)
 
 #Genes only
 plotting_df %>%
   ggplot(aes(X, Y)) +
   geom_point(data = subset(plotting_df, Type == "Gene"), size = 0.5, alpha = 0.3, color = "gray70")
-  ggsave(filename = file.path(out_path, "depmap_embedding_gene.pdf"), width = 5, height = 5, device = cairo_pdf)
+
+ggsave(filename = file.path(out_path, "depmap_embedding_gene.pdf"), width = 5, height = 5, device = cairo_pdf)
 
 #Fns only
 plotting_df %>%
   ggplot(aes(X, Y)) +
   geom_point(data = subset(plotting_df, Type == "Function"),size = 1, shape = 17)
-  ggsave(filename = file.path(out_path, "depmap_embedding_fn.pdf"), width = 5, height = 5, device = cairo_pdf)
+
+ggsave(filename = file.path(out_path, "depmap_embedding_fn.pdf"), width = 5, height = 5, device = cairo_pdf)
 
 #Fn labeled
 plotting_df %>%
   ggplot(aes(X, Y)) +
   geom_point(data = subset(plotting_df, Type == "Function"),size = 1, shape = 17) +
   geom_text(data = subset(plotting_df, Type == "Function"), aes(label = Name), size = 2, nudge_y = 0.15)
-  ggsave(filename = file.path(out_path, "depmap_embedding_fn_labeled.pdf"), width = 5, height = 5, device = cairo_pdf)
+
+ggsave(filename = file.path(out_path, "depmap_embedding_fn_labeled.pdf"), width = 5, height = 5, device = cairo_pdf)
 
 #Genes by median essentiality
 plotting_df %>%
@@ -105,7 +114,8 @@ plotting_df %>%
   geom_point(size = 0.5, alpha = 0.75, aes(color = Median)) +
   scale_color_distiller(palette = "RdBu")+
   theme(legend.position = "bottom")
-  ggsave(filename = file.path(out_path, "depmap_embedding_gene_median_essential.pdf"), width = 4, height = 4.5, device = cairo_pdf)
+
+ggsave(filename = file.path(out_path, "depmap_embedding_gene_median_essential.pdf"), width = 4, height = 4.5, device = cairo_pdf)
 
 #Genes by Webster reconstruction
 plotting_df %>%
@@ -116,7 +126,8 @@ plotting_df %>%
   scale_color_viridis_c() +
   labs(color = "Pearson") +
   theme(legend.position = "bottom")
-  ggsave(filename = file.path(out_path, "depmap_embedding_gene_recon.pdf"), width = 4, height = 4.5, device = cairo_pdf)
+
+ggsave(filename = file.path(out_path, "depmap_embedding_gene_recon.pdf"), width = 4, height = 4.5, device = cairo_pdf)
 
 #Genes by original variance
 plotting_df %>%
@@ -127,7 +138,8 @@ plotting_df %>%
   geom_point(size = 0.5, alpha = 0.3, aes(color = log(Var))) +
   scale_color_viridis_c(option="magma") +
   theme(legend.position = "bottom")
-  ggsave(filename = file.path(out_path, "depmap_embedding_gene_var.pdf"), width = 4, height = 4.5, device = cairo_pdf)
+
+ggsave(filename = file.path(out_path, "depmap_embedding_gene_var.pdf"), width = 4, height = 4.5, device = cairo_pdf)
 
 # Project Localization data into Webster --------------------------------------------------------------------
 
@@ -202,7 +214,8 @@ loc_graph %>%
   geom_node_point(aes(color = Color)) +
   scale_colour_identity() +
   ylim(-10, NA)
-  ggsave(file.path(out_path, "loc_dendrogram.pdf"), width = 5, height = 8, device = cairo_pdf)
+
+ggsave(file.path(out_path, "loc_dendrogram.pdf"), width = 5, height = 8, device = cairo_pdf)
 
 # Plot embedding ----------------------------------------------------------
 #Plotting locations
@@ -220,8 +233,9 @@ loc_plot <- loc_plot_df %>%
   scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +
   theme_void()
 
-loc_plot +
-  ggsave(file.path(out_path, "loc_embedding.pdf"), width = 6, height = 5)
+loc_plot
+
+ggsave(file.path(out_path, "loc_embedding.pdf"), width = 6, height = 5)
 
 
 loc_plot_df %>%
@@ -232,7 +246,8 @@ loc_plot_df %>%
   scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +
   facet_wrap(~Color, nrow = 1) +
   theme(legend.position = "none")
-  ggsave(file.path(out_path, "facet_loc_embedding.pdf"), width = 8, height = 1.75)
+
+ggsave(file.path(out_path, "facet_loc_embedding.pdf"), width = 8, height = 1.75)
 
 
 
@@ -245,7 +260,8 @@ loc_plot_df %>%
   scale_colour_identity() +
   scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +
   theme_void()
-  ggsave(file.path(out_path, "loc_embedding_w_names.pdf"), width = 7, height = 6)
+
+ggsave(file.path(out_path, "loc_embedding_w_names.pdf"), width = 7, height = 6)
 
 g1 <- loc_plot_df %>%
   ggplot(aes(X, Y, label = Name)) +
@@ -270,12 +286,15 @@ g3 <- fns_only %>%
   ggplot(aes(V1, V2, color = Color, alpha = Specificity, label=Name)) +
   geom_point(shape = 17) +
   scale_color_identity() +
-  scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +theme_void()
+  scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +
+  theme_void()
 
 
-g3 +
-  ggsave(file.path(out_path, "fn_only.pdf"), width = 3, height = 2)
-plotly::ggplotly(g3)
+g3
+
+ggsave(file.path(out_path, "fn_only.pdf"), width = 3, height = 2)
+
+#plotly::ggplotly(g3)
 
 # Functions for Plotting frames ---------------------------------------------------------
 
@@ -403,8 +422,9 @@ sterol_window <- plotting_window(c(sterol, perox), nudge = 0.05)
 
 sterol_window %>%
   plot_gene_panel() +
-  theme(legend.position = "none") +
-  ggsave(file.path(out_path, "sterol_window.pdf"), width = 3, height = 3)
+  theme(legend.position = "none")
+
+ggsave(file.path(out_path, "sterol_window.pdf"), width = 3, height = 3)
 
 plot_pleiotropy_network(c(sterol, perox))
 
@@ -414,8 +434,9 @@ traf_expand_window <- plotting_window(c(sterol, perox), nudge = 1)
 
 traf_expand_window %>%
   plot_fn_panel() +
-  theme(legend.position = "none") +
-  ggsave(file.path(out_path, "sterol_expand.pdf"), width = 3, height = 3)
+  theme(legend.position = "none")
+
+ggsave(file.path(out_path, "sterol_expand.pdf"), width = 3, height = 3)
 
 
 # Focus on Retrograde --------------------------------------------
@@ -427,8 +448,9 @@ lamtor <- "V17"
 retro_window <- plotting_window(c(wash, hops, lamtor), nudge =0.2)
 retro_window  %>%
   plot_gene_panel() +
-  theme(legend.position = "none") +
-  ggsave(file.path(out_path, "retro_window.pdf"), width = 3, height = 3)
+  theme(legend.position = "none")
+
+ggsave(file.path(out_path, "retro_window.pdf"), width = 3, height = 3)
 
 plot_pleiotropy_network(c(wash, hops, lamtor))
 
@@ -437,8 +459,9 @@ plot_pleiotropy_network(c(wash, hops, lamtor))
 retro_expand_window <- plotting_window(c(wash, hops, lamtor), nudge =0.75)
 retro_expand_window  %>%
   plot_fn_panel()  +
-  theme(legend.position = "none") +
-  ggsave(file.path(out_path, "retro_expand.pdf"), width = 3, height = 3)
+  theme(legend.position = "none")
+
+ggsave(file.path(out_path, "retro_expand.pdf"), width = 3, height = 3)
 
 
 # Focus on SCAR/WAVE  --------------------------------------------
@@ -449,8 +472,9 @@ scar_window <- plotting_window(c(scar_wave, focal), nudge = 0.05)
 
 scar_window%>%
   plot_gene_panel()  +
-  theme(legend.position = "none") +
-  ggsave(file.path(out_path, "scar_window.pdf"), width = 3, height = 3)
+  theme(legend.position = "none")
+
+ggsave(file.path(out_path, "scar_window.pdf"), width = 3, height = 3)
 
 plot_pleiotropy_network(c(scar_wave, focal))
 
@@ -461,8 +485,9 @@ scar_expanded_window <- plotting_window(c(scar_wave, focal), nudge = 0.5)
 
 scar_expanded_window %>%
   plot_fn_panel() +
-  theme(legend.position = "none") +
-  ggsave(file.path(out_path, "scar_expanded.pdf"), width = 3, height = 3)
+  theme(legend.position = "none")
+
+ggsave(file.path(out_path, "scar_expanded.pdf"), width = 3, height = 3)
 
 
 
@@ -472,8 +497,9 @@ mito_window <- plotting_window(c("V2", "V145"), nudge = 0.05)
 
 mito_window %>%
   plot_gene_panel() +
-  theme(legend.position = "none") +
-  ggsave(file.path(out_path, "mito_window.pdf"), width = 3, height = 3)
+  theme(legend.position = "none")
+
+ggsave(file.path(out_path, "mito_window.pdf"), width = 3, height = 3)
 
 # Mito expanded  -------------------------------------------------------
 
@@ -481,8 +507,9 @@ mito_expanded_window <- plotting_window(c("V2", "V145"), nudge = 3)
 
 mito_expanded_window %>%
   plot_fn_panel() +
-  theme(legend.position = "none") +
-  ggsave(file.path(out_path, "mito_expanded.pdf"), width = 3, height = 3)
+  theme(legend.position = "none")
+
+ggsave(file.path(out_path, "mito_expanded.pdf"), width = 3, height = 3)
 
 
 # chrom expanded  -------------------------------------------------------
@@ -491,8 +518,9 @@ chrom_expanded_window <- plotting_window(c("V33", "V132"), nudge = 1)
 
 chrom_expanded_window %>%
   plot_fn_panel() +
-  theme(legend.position = "none") +
-  ggsave(file.path(out_path, "chrom_expanded.pdf"), width = 3, height = 3)
+  theme(legend.position = "none")
+
+ggsave(file.path(out_path, "chrom_expanded.pdf"), width = 3, height = 3)
 
 
 # misc expanded  -------------------------------------------------------
@@ -501,8 +529,9 @@ misc_expanded_window <- plotting_window(c("V67", "V60"), nudge = 0.6)
 
 misc_expanded_window %>%
   plot_fn_panel() +
-  theme(legend.position = "none") +
-  ggsave(file.path(out_path, "misc_expanded.pdf"), width = 3, height = 3)
+  theme(legend.position = "none")
+
+ggsave(file.path(out_path, "misc_expanded.pdf"), width = 3, height = 3)
 
 
 
@@ -512,8 +541,9 @@ cyto_expanded_window <- plotting_window(c("V176", "V172"), nudge = 0.5)
 
 cyto_expanded_window %>%
   plot_fn_panel() +
-  theme(legend.position = "none") +
-  ggsave(file.path(out_path, "cyto_expanded.pdf"), width = 3, height = 3)
+  theme(legend.position = "none")
+
+ggsave(file.path(out_path, "cyto_expanded.pdf"), width = 3, height = 3)
 
 
 
@@ -526,32 +556,42 @@ fgfr <- "V8"
 #KRAS and NRAS
 ras_window <- plotting_window(c(kras, nras), nudge = 0.1)
 
-plot_loadings_panel(ras_window, kras) +
-  ggsave(file.path(out_path, "shoc2_kras.pdf"), width =1.5, height = 1.5)
-plot_loadings_panel(ras_window, nras)  +
-  ggsave(file.path(out_path, "shoc2_nras.pdf"), width =1.5, height = 1.5)
+plot_loadings_panel(ras_window, kras)
+
+ggsave(file.path(out_path, "shoc2_kras.pdf"), width =1.5, height = 1.5)
+
+plot_loadings_panel(ras_window, nras)
+
+ggsave(file.path(out_path, "shoc2_nras.pdf"), width =1.5, height = 1.5)
 
 #EGFR and FGFR
 gfr_window  <- plotting_window(c(egfr, fgfr), nudge = 0.1)
 
 
-plot_loadings_panel(gfr_window, egfr) +
-  ggsave(file.path(out_path, "shoc2_egfr.pdf"), width =1.5, height = 1.5)
-plot_loadings_panel(gfr_window, fgfr) +
-  ggsave(file.path(out_path, "shoc2_fgfr.pdf"), width =1.5, height = 1.5)
+plot_loadings_panel(gfr_window, egfr)
+
+ggsave(file.path(out_path, "shoc2_egfr.pdf"), width =1.5, height = 1.5)
+
+plot_loadings_panel(gfr_window, fgfr)
+
+ggsave(file.path(out_path, "shoc2_fgfr.pdf"), width =1.5, height = 1.5)
 
 
 param_in <- 2.2
+
 #Whole embedding plots
-plot_loadings_panel(loc_plot_df, kras, gene_labs = F) +
-  ggsave(file.path(out_path, "global_kras.pdf"), width =param_in, height = param_in)
+plot_loadings_panel(loc_plot_df, kras, gene_labs = F)
 
-plot_loadings_panel(loc_plot_df, nras, gene_labs = F) +
-  ggsave(file.path(out_path, "global_nras.pdf"), width =param_in, height = param_in)
+ggsave(file.path(out_path, "global_kras.pdf"), width =param_in, height = param_in)
 
+plot_loadings_panel(loc_plot_df, nras, gene_labs = F)
 
-plot_loadings_panel(loc_plot_df, egfr, gene_labs = F) +
-  ggsave(file.path(out_path, "global_egfr.pdf"), width =param_in, height = param_in)
+ggsave(file.path(out_path, "global_nras.pdf"), width =param_in, height = param_in)
 
-plot_loadings_panel(loc_plot_df, fgfr, gene_labs = F) +
-  ggsave(file.path(out_path, "global_fgfr.pdf"), width =param_in, height = param_in)
+plot_loadings_panel(loc_plot_df, egfr, gene_labs = F)
+
+ggsave(file.path(out_path, "global_egfr.pdf"), width =param_in, height = param_in)
+
+plot_loadings_panel(loc_plot_df, fgfr, gene_labs = F)
+
+ggsave(file.path(out_path, "global_fgfr.pdf"), width =param_in, height = param_in)

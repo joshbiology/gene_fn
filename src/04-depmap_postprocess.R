@@ -18,7 +18,7 @@ graph_objective_precomp <- function(factorized_mat, L_mat) {
 }
 
 
-import_graphDL  <- function(x, input = avana_19q4_webster) {
+import_webster_obj  <- function(x, input = avana_19q4_webster) {
   tmp <- R.matlab::readMat(x)
 
   graphdl_to_factorized(import_graphdl(tmp), colnames(input), rownames(input))
@@ -63,7 +63,7 @@ gene_laplacian <- igraph::laplacian_matrix(generate_graph(avana_19q4_webster%>% 
 mat_paths <- list("./data/interim/matlab/depmap_grid") %>%
   map(~list.files(., pattern = "*.mat", full.names = T)) %>% unlist()
 
-depmap_grid_output <- map(mat_paths, import_graphDL)
+depmap_grid_output <- map(mat_paths, import_webster_obj)
 
 
 tictoc::tic()
@@ -94,7 +94,7 @@ depmap_grid_metrics_df %>%
 mat_paths <- list("./data/interim/matlab/depmap_wide") %>%
   map(~list.files(., pattern = "*.mat", full.names = T)) %>% unlist()
 
-depmap_wide_output <- map(mat_paths, import_graphDL)
+depmap_wide_output <- map(mat_paths, import_webster_obj)
 
 tictoc::tic()
 depmap_wide_metrics_df <- generate_metrics(depmap_wide_output)
@@ -141,7 +141,7 @@ rm(depmap_wide_output)
 mat_paths <- list("./data/interim/matlab/depmap_deep") %>%
   map(~list.files(., pattern = "*.mat", full.names = T)) %>% unlist()
 
-depmap_deep_output <- map(mat_paths, import_graphDL)
+depmap_deep_output <- map(mat_paths, import_webster_obj)
 
 tictoc::tic()
 depmap_deep_metrics_df <- generate_metrics(depmap_deep_output)
@@ -180,8 +180,9 @@ random_seed_crosscor <- cor(depmap_deep_output[[71]]$cell_mat, depmap_deep_outpu
 
 init_final_dict_crosscor <- cor(avana_19q4_webster[, attr(depmap_deep_output[[71]], "extras")$medoids[,1]], depmap_deep_output[[71]]$cell_mat)
 
-pheatmap::pheatmap(tmp, cluster_cols = F, cluster_rows = F, breaks = seq(-1,1, length.out = 100))
-pheatmap::pheatmap(tmp2, cluster_cols = F, cluster_rows = F, breaks = seq(-1, 1, length.out = 100), show_rownames = F)
+#Visualize cross-correlation heatmaps
+#pheatmap::pheatmap(random_seed_crosscor, cluster_cols = F, cluster_rows = F, breaks = seq(-1,1, length.out = 100))
+#pheatmap::pheatmap(init_final_dict_crosscor, cluster_cols = F, cluster_rows = F, breaks = seq(-1, 1, length.out = 100), show_rownames = F)
 
 #Print medoids names
 colnames(avana_19q4_webster)[attr(depmap_deep_output[[71]], "extras")$medoids[,1]]
@@ -194,25 +195,11 @@ tibble(Init_Final = init_final_dict_crosscor %>% diag(),
   facet_wrap(~Type)
   ggsave(file.path(out_path, "consistency_hist.pdf"), width = 4, height = 1.5)
 
-
 median(random_seed_crosscor %>% diag)
 median(init_final_dict_crosscor %>% diag)
 
-# Inidividual gene examination -------------------------------------------------------
-#returns the genes and columns invovled.
-extract_atoms <- function(mat, gene, loading_threshold = 8) {
-  # set col names
-  colnames(mat) <- paste("V", 1:ncol(mat), sep = "")
 
-  gene_loadings <- mat[gene, ]
-  col_index <- abs(gene_loadings) > 0
-
-  row_tmp <- rowSums(abs(mat[,col_index]))
-  row_index <- row_tmp > loading_threshold
-
-
-  return(mat[row_index, col_index])
-}
+# Individual gene examination -------------------------------------------------------
 
 
 generate_seed_heatmaps <- function(gene, output= depmap_deep_output) {
@@ -269,45 +256,15 @@ genes = c(shoc2 = "SHOC2",
           kat2a = "KAT2A")
 
 
+#This function takes as input a gene name, and outputs a heatmap of that gene's loadings
+#over the depmap_deep_output objects.
 
-other_genes = c("TXNRD1", "PRKRA", "RPP25L", "WDR1",  "LEMD3", "EGLN1", "VRK1", "BIRC6", "ACSL3")#"TMPO",
+#Ex: BRD9
+generate_seed_heatmaps(convert_genes("BRD9", 'symbol', 'cds_id'), depmap_deep_output[71:80])
 
-convert_genes(genes, 'symbol', 'cds_id')
-
-
-convert_genes(genes, 'symbol', 'cds_id') %in% (avana_19q4_webster %>% colnames())
-convert_genes(other_genes, 'symbol', 'cds_id') %in% (avana_19q4_webster %>% colnames())
-
-
-#Goal here is to verify the factors used in the paper
-walk(convert_genes(genes, 'symbol', 'cds_id'), generate_seed_heatmaps)
-walk(convert_genes(other_genes, 'symbol', 'cds_id'), generate_seed_heatmaps)
-
-generate_seed_heatmaps(convert_genes("GPX4",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("C12orf49",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("ACSL3",'symbol', 'cds_id'))
-
-generate_seed_heatmaps(convert_genes("PEX26",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("SOS1",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("BRD9",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("BRD7",'symbol', 'cds_id'))
-
-generate_seed_heatmaps(convert_genes("SMARCB1",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("ALG5",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("DHODH",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("NAMPT",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("DTYMK",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("DTYMK",'symbol', 'cds_id'))
-
-
-generate_seed_heatmaps(convert_genes("KAT2A",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("TADA2A",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("TADA2B",'symbol', 'cds_id'))
-
-generate_seed_heatmaps(convert_genes("VPS29",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("PRKRA",'symbol', 'cds_id'))
-generate_seed_heatmaps(convert_genes("EP300",'symbol', 'cds_id'))
-
+#Plot individual factors used throughout the paper across all dictionaries.
+#Warning: This generates 100's of large PDF's.
+#walk(convert_genes(genes, 'symbol', 'cds_id'), generate_seed_heatmaps)
 
 
 # Section II: Denoising  --------------------------------------------------
@@ -338,22 +295,23 @@ avana_19q4_webster_train  <- avana_19q4_webster[,filter(train_test_df, Group == 
 
 
 # #Create noise matrices.
-# noise_25 <-  rnorm(length(avana_19q4_webster), sd = 0.25) %>% matrix(nrow = dim(avana_19q4_webster)[1]) %>% set_colnames(colnames(avana_19q4_webster))
-# noise_50 <-  rnorm(length(avana_19q4_webster), sd = 0.50) %>% matrix(nrow = dim(avana_19q4_webster)[1]) %>% set_colnames(colnames(avana_19q4_webster))
-# noise_100 <-  rnorm(length(avana_19q4_webster), sd = 1) %>% matrix(nrow = dim(avana_19q4_webster)[1]) %>% set_colnames(colnames(avana_19q4_webster))
-# noise_150 <-  rnorm(length(avana_19q4_webster), sd = 1.5) %>% matrix(nrow = dim(avana_19q4_webster)[1]) %>% set_colnames(colnames(avana_19q4_webster))
-#
+noise_25 <-  rnorm(length(avana_19q4_webster), sd = 0.25) %>% matrix(nrow = dim(avana_19q4_webster)[1]) %>% set_colnames(colnames(avana_19q4_webster))
+noise_50 <-  rnorm(length(avana_19q4_webster), sd = 0.50) %>% matrix(nrow = dim(avana_19q4_webster)[1]) %>% set_colnames(colnames(avana_19q4_webster))
+noise_100 <-  rnorm(length(avana_19q4_webster), sd = 1) %>% matrix(nrow = dim(avana_19q4_webster)[1]) %>% set_colnames(colnames(avana_19q4_webster))
+noise_150 <-  rnorm(length(avana_19q4_webster), sd = 1.5) %>% matrix(nrow = dim(avana_19q4_webster)[1]) %>% set_colnames(colnames(avana_19q4_webster))
+
+#Optional:
 # #Exporting noise matrices for reproducibility.
 # export_for_matlab(noise_25, file.path(out_path, "noise_25.csv"))
 # export_for_matlab(noise_50, file.path(out_path, "noise_50.csv"))
 # export_for_matlab(noise_100, file.path(out_path, "noise_100.csv"))
 # export_for_matlab(noise_150, file.path(out_path, "noise_150.csv"))
 
-#Import for reproducibility:
-noise_25 <- read_csv(file.path(out_path, "noise_25.csv"), col_names =  colnames(avana_19q4_webster)) %>% as.matrix()
-noise_50 <- read_csv(file.path(out_path, "noise_50.csv"), col_names =  colnames(avana_19q4_webster)) %>% as.matrix()
-noise_100 <- read_csv(file.path(out_path, "noise_100.csv"), col_names =  colnames(avana_19q4_webster)) %>% as.matrix()
-noise_150 <- read_csv(file.path(out_path, "noise_150.csv"), col_names =  colnames(avana_19q4_webster)) %>% as.matrix()
+# #Import for reproducibility:
+# noise_25 <- read_csv(file.path(out_path, "noise_25.csv"), col_names =  colnames(avana_19q4_webster)) %>% as.matrix()
+# noise_50 <- read_csv(file.path(out_path, "noise_50.csv"), col_names =  colnames(avana_19q4_webster)) %>% as.matrix()
+# noise_100 <- read_csv(file.path(out_path, "noise_100.csv"), col_names =  colnames(avana_19q4_webster)) %>% as.matrix()
+# noise_150 <- read_csv(file.path(out_path, "noise_150.csv"), col_names =  colnames(avana_19q4_webster)) %>% as.matrix()
 
 #Add noise.
 noisy_input_25 <- avana_19q4_webster+noise_25
@@ -383,18 +341,17 @@ export_for_matlab(avana_19q4_webster[,training_genes]+noise_150[,training_genes]
 export_for_matlab(avana_19q4_webster_test, file.path(out_path, "avana_19q4_webster_test_noise_0.csv"))
 export_for_matlab(avana_19q4_webster_train, file.path(out_path, "avana_19q4_webster_train_noise_0.csv"))
 
-#Write bash script (This step is performed in 00-webster_scripts.R)
+#Write bash script (This step is performed in 00-webster_scripts.R, resulting in gene_fn/cluster_scripts/denoise.txt)
 
 #Execute batch run locally
-system("bash ./cluster_scripts/denoise.txt")
-
+#system("bash ./cluster_scripts/denoise.txt")
 
 
 #Import datasets
 mat_paths <- list("./data/interim/matlab/depmap_denoise") %>%
   map(~list.files(., pattern = "*.mat", full.names = T)) %>% unlist()
 
-depmap_denoise_output <- map(mat_paths, ~import_graphDL(., avana_19q4_webster_train))
+depmap_denoise_output <- map(mat_paths, ~import_webster_obj(., avana_19q4_webster_train))
 
 denoise_params_df <- extract_params(depmap_denoise_output)
 
@@ -413,6 +370,9 @@ omp_params <- tibble(dict_path = map_chr(1:length(depmap_denoise_output), ~file.
                        rep(file.path(out_path, "avana_19q4_webster_test_noise_50.csv"), 5)),
        omp_file = file.path(out_path, outer(paste(c(0, 100, 150, 25, 50), "denoise_omp", sep = "_"), 1:5, paste, sep = "_") %>% t() %>%  as.vector() %>% paste(".csv", sep = "")))
 
+
+#If you are running this script, make sure to customize your local path:
+#Mine was /Applications/MATLAB_R2019b.app/bin/matlab 
 sys_command <- map_chr(1:nrow(omp_params), function(x){
 
   sprintf("/Applications/MATLAB_R2019b.app/bin/matlab -batch  \"OMP_wrapper('%s', '%s', '%s', %d);exit\"",
@@ -425,7 +385,7 @@ sys_command <- map_chr(1:nrow(omp_params), function(x){
 cat(sys_command, sep = '\n',file=file.path(".", "cluster_scripts", paste("denoise_omp","txt", sep = ".")))
 
 #Execute
-system("bash ./cluster_scripts/denoise_omp.txt")
+#system("bash ./cluster_scripts/denoise_omp.txt")
 
 #Read OMP matrices
 denoise_omp <- list.files(out_path, pattern = "*denoise_omp*", full.names = T) %>%

@@ -25,7 +25,7 @@ library(ProjectTemplate); load.project()
 
 out_path <- file.path(".", "output", "03-depmap_preprocess")
 create_output_folder(out_path)
-source("./munge/cache_arm_information.R")
+
 
 
 # Functions -------------------------------------------------------
@@ -75,7 +75,7 @@ regress_nnmd <- function(gene_effect_matrix, cell_line_names, nnmd_values) {
   }) %>% scale(center = F, scale = T) %>% t()
 }
 
-# Import and remove NA's from 20Q2 -------------------------------------------------------------
+# Import and remove NA's from 19q4 -------------------------------------------------------------
 gene_effect_19q4 <- read_tsv("./data/raw/depmap/public-19q4_v23-achilles-gene-effect.tsv") %>%
   column_to_rownames("...1") %>%
   as.matrix()

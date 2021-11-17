@@ -1,5 +1,10 @@
 #setup_project
 #Goal: For users not using Docker, setup necessary packages locally.
+
+###Manual install
+#This package needs to be installed from a specific historical link in CRAN
+install.packages("https://cran.r-project.org/src/contrib/Archive/FastImputation/FastImputation_2.0.tar.gz", repos = NULL, type="source")
+
 ### Install missing packages
 
 installed_pkgs <- installed.packages()
@@ -86,13 +91,11 @@ BiocManager::install(c("AnnotationDbi",
 #https://figshare.com/articles/dataset/Data_for_reproducing_Webster_figures/14960006
 #and putting it into a directory called gene_fn/data
 
-#2. You can run gene_fn/load_data.sh, which is used by the Dockerfile to do the same as #1 above.
+#2. You can run gene_fn/load_data.sh, which automates #1 above.
 
 
 ### Setup folders
 source("./env/setup_folders.R")
-
-
 
 ### Test load the package
 
