@@ -271,7 +271,7 @@ g1 <- loc_plot_df %>%
   scale_alpha(limits = c(0, 0.6), range = c(0, 1)) +
   theme_void()
 
-plotly::ggplotly(g1)
+#plotly::ggplotly(g1)
 
 
 # Plotting embedding without genes ---------------------------------------

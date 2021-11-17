@@ -126,7 +126,7 @@ g1 <- umap_compounds_orig$layout %>%
   ggplot(aes(V1, V2, color = group, text = paste(group, name, Median))) +
   geom_point()
 
-plotly::ggplotly(g1)
+#plotly::ggplotly(g1)
 
 umap_compounds_orig$layout %>%
   as_tibble() %>%
@@ -190,7 +190,7 @@ g1 <- umap_filtered$layout %>%
   ggplot(aes(V1, V2, color = group, text = paste(group, name, Median))) +
   geom_point()
 
-plotly::ggplotly(g1)
+#plotly::ggplotly(g1)
 
 # Prepare orthogonal matching pursuit -------------------------------------
 #This code block prepares a bash script to call MATLAB and perform orthogonal matching pursuit.
@@ -333,7 +333,7 @@ g_combo <- impute_df %>%
   geom_point(data = subset(impute_df, Type == "Compound"),size = 2, shape = 18,aes(color = moa_umap)) +
   theme_void()
 
-plotly::ggplotly(g_combo)
+#plotly::ggplotly(g_combo)
 
 g_combo
 
@@ -546,7 +546,7 @@ plot_loadings_by_dose <- function(moa_focus, fn, number_of_facets = 3) {
   
   cmpd_loadings <- prism_secondary_omp %>% select(-column_name) %>% as.matrix() %>% "/"(325)
   tmp <- proj_results_secondary %>%
-    cbind(cmpd_to_function %>% as_tibble()) %>%
+    cbind(cmpd_loadings %>% as_tibble()) %>%
     left_join(secondary_meta)
 
   high_loaded_names <- tmp %>%

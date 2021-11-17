@@ -5,8 +5,6 @@
 
 # Step 1: Check installs --------------------------------------------------
 
-#This package needs to be installed from a specific historical link in CRAN
-install.packages("https://cran.r-project.org/src/contrib/Archive/FastImputation/FastImputation_2.0.tar.gz", repos = NULL, type="source")
 
 ### Check for and install missing packages
 
@@ -38,7 +36,6 @@ pkgs <-  c("bitops",
            "matrixStats", 
            "Metrics", 
            "mltools", 
-           "modes", 
            "pheatmap", 
            "plyr", 
            "ProjectTemplate", 
@@ -67,31 +64,44 @@ pkgs <-  c("bitops",
            "yardstick"
 )
 
-if (length(setdiff(pkgs, installed_pkgs)) > 0) {
+if (length(setdiff(pkgs, rownames(installed_pkgs)) > 0)) {
   install.packages(pkgs = setdiff(pkgs, installed_pkgs))
 }
 
+if (!("FastImputation" %in% rownames(installed_pkgs))) {
+  install.packages("https://cran.r-project.org/src/contrib/Archive/FastImputation/FastImputation_2.0.tar.gz", repos = NULL, type="source")
+}
+
+#This package needs to be installed from a specific historical link in CRAN
+
+
 ### Install bioconductor packages.
-if (!require("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
+#Right now, I've removed any bioc dependencies in our repo for simplicity of deployment.
+#If we need these packages eventually I'll turn this flag on.
+check_bioc <- F
 
-BiocManager::install(version = "3.14")
-
-
-bioc_packages <- c("AnnotationDbi", 
-                   "Biobase", 
-                   "BiocGenerics", 
-                   "biomaRt", 
-                   "fgsea", 
-                   "GenomeInfoDb", 
-                   "GenomicFeatures", 
-                   "GenomicRanges", 
-                   "IRanges", 
-                   "mygene", 
-                   "S4Vectors")
-
-if (length(setdiff(bioc_packages, installed_pkgs)) > 0) {
-  BiocManager::install(pkgs = setdiff(bioc_packages, installed_pkgs))
+if (check_bioc) {
+  if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+  
+  BiocManager::install(version = "3.14")
+  
+  
+  bioc_packages <- c("AnnotationDbi", 
+                     "Biobase", 
+                     "BiocGenerics", 
+                     "biomaRt", 
+                     "fgsea", 
+                     "GenomeInfoDb", 
+                     "GenomicFeatures", 
+                     "GenomicRanges", 
+                     "IRanges", 
+                     "mygene", 
+                     "S4Vectors")
+  
+  if (length(setdiff(bioc_packages, rownames(installed_pkgs)) > 0)) {
+    BiocManager::install(pkgs = setdiff(bioc_packages, installed_pkgs))
+  }
 }
 
 # Step 2: Gather data --------------------------------------------------
