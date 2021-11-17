@@ -1,11 +1,14 @@
 #setup_project
-#Goal: For users not using Docker, setup necessary packages locally.
+#Goal: Setup necessary packages and validate folder structure to hold output figures.
+#Follow each step to validate your environment.
 
-###Manual install
+
+# Step 1: Check installs --------------------------------------------------
+
 #This package needs to be installed from a specific historical link in CRAN
 install.packages("https://cran.r-project.org/src/contrib/Archive/FastImputation/FastImputation_2.0.tar.gz", repos = NULL, type="source")
 
-### Install missing packages
+### Check for and install missing packages
 
 installed_pkgs <- installed.packages()
 
@@ -68,34 +71,45 @@ if (length(setdiff(pkgs, installed_pkgs)) > 0) {
   install.packages(pkgs = setdiff(pkgs, installed_pkgs))
 }
 
-### Bioc
+### Install bioconductor packages.
 if (!require("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
+
 BiocManager::install(version = "3.14")
 
-BiocManager::install(c("AnnotationDbi", 
-                       "Biobase", 
-                       "BiocGenerics", 
-                       "biomaRt", 
-                       "fgsea", 
-                       "GenomeInfoDb", 
-                       "GenomicFeatures", 
-                       "GenomicRanges", 
-                       "IRanges", 
-                       "mygene", 
-                       "S4Vectors"))
 
-### Gather data
+bioc_packages <- c("AnnotationDbi", 
+                   "Biobase", 
+                   "BiocGenerics", 
+                   "biomaRt", 
+                   "fgsea", 
+                   "GenomeInfoDb", 
+                   "GenomicFeatures", 
+                   "GenomicRanges", 
+                   "IRanges", 
+                   "mygene", 
+                   "S4Vectors")
+
+if (length(setdiff(bioc_packages, installed_pkgs)) > 0) {
+  BiocManager::install(pkgs = setdiff(bioc_packages, installed_pkgs))
+}
+
+# Step 2: Gather data --------------------------------------------------
+
 #At this stage, you can either
 #1. download the data manually:
 #https://figshare.com/articles/dataset/Data_for_reproducing_Webster_figures/14960006
-#and putting it into a directory called gene_fn/data
+#and putting it into the gene_fn/data directory.
 
-#2. You can run gene_fn/load_data.sh, which automates #1 above.
+#2. Or, you can run gene_fn/load_data.sh, which automates #1 above.
 
 
-### Setup folders
+
+# Step 3: Setup folders --------------------------------------------------
 source("./env/setup_folders.R")
+
+
+# Step 4: Test ProjectTemplate --------------------------------------------------
 
 ### Test load the package
 
@@ -105,8 +119,7 @@ load.project()
 #The load.project command should run without errors. It may ask you to perform migrate.project() if it is missing any folders etc.
 
 
-
-### Setup graphics
+# Step 5: Setup graphics --------------------------------------------------
 #https://www.andrewheiss.com/blog/2017/09/27/working-with-r-cairo-graphics-custom-fonts-and-ggplot/
 #Many plots use cairo_pdf to export rich PDF graphics.
 #There are different setup requirements on Windows, R and Linux.
