@@ -37,26 +37,26 @@ query_na <- function(gene_effect_matrix) {
     enframe() %>%
     count(value) %>%
     set_colnames(c("Number of NA's", "Number of genes"))
-
-
+  
+  
   cell_lines <- matrixStats::rowSums2(is.na(gene_effect_matrix)) %>%
     set_names(rownames(gene_effect_matrix)) %>%
     enframe() %>%
     count(value) %>%
     set_colnames(c("Number of NA's", "Number of cell lines"))
-
+  
   return(list(Genes = genes, Cell_Lines = cell_lines))
 }
 
 
 remove_nuisance_genes <- function(gene_effect_matrix) {
   #These are manually defined nusiance gene sets from HUGO. Ex: olf receptors (Boyle et al. 2018)
-
+  
   nusiance_gene_df <- list.files("./data/raw/nusiance_genesets", pattern = "tsv", full.names = T) %>%
     map_df(read_tsv)
-
+  
   gene_effect_matrix[, !(convert_cds_to_entrez(colnames(gene_effect_matrix)) %in% nusiance_gene_df$`NCBI Gene ID`)]
-
+  
 }
 
 center_cell_lines <- function(gene_effect_matrix) {
@@ -68,8 +68,8 @@ center_cell_lines <- function(gene_effect_matrix) {
 regress_nnmd <- function(gene_effect_matrix, cell_line_names, nnmd_values) {
   nnmd <- nnmd_values
   names(nnmd) <- cell_line_names
-
-
+  
+  
   plyr::aaply(gene_effect_matrix, 2, function(x){
     lm(x~ nnmd[rownames(gene_effect_matrix)])$residuals
   }) %>% scale(center = F, scale = T) %>% t()
@@ -154,7 +154,7 @@ gene_vars %>%
   ggtitle("Distribution of gene variances (log10)") +
   theme_minimal() +
   facet_wrap(~Dataset, ncol = 1)
-  ggsave(file.path(out_path,"log_gene_var_histogram_19q4.pdf"), width = 4, height = 3)
+ggsave(file.path(out_path,"log_gene_var_histogram_19q4.pdf"), width = 4, height = 3)
 
 gene_vars %>%
   dplyr::select(Gene, Dataset, Var) %>%
@@ -166,7 +166,7 @@ gene_vars %>%
   geom_density_2d(binwidth = 0.2, alpha = 0.75, color = "cyan") +
   ggtitle("Distribution of gene variances (log10)") +
   theme_minimal()
-  ggsave(file.path(out_path,"gene_variance_scatter_19q4.png"), width = 4.5, height = 4)
+ggsave(file.path(out_path,"gene_variance_scatter_19q4.png"), width = 4.5, height = 4)
 
 gene_vars %>%
   ggplot(aes(sample = Var)) +
@@ -197,11 +197,11 @@ min_diff <- 0.3
 
 qq_data <- qq_data %>%
   dplyr::mutate(Predicted = c(predict(qq_fit_line_avana,
-                               split(qq_data, qq_data$Dataset)$Avana %>% dplyr::select(Theoretical)),
-                       predict(qq_fit_line_sanger,
-                               split(qq_data, qq_data$Dataset)$Sanger %>% dplyr::select(Theoretical))),
-         Diff = Var - Predicted,
-         High_Var = Diff > min_diff & Rank > min_rank)
+                                      split(qq_data, qq_data$Dataset)$Avana %>% dplyr::select(Theoretical)),
+                              predict(qq_fit_line_sanger,
+                                      split(qq_data, qq_data$Dataset)$Sanger %>% dplyr::select(Theoretical))),
+                Diff = Var - Predicted,
+                High_Var = Diff > min_diff & Rank > min_rank)
 
 qq_data %>%
   ggplot(aes(Theoretical, Var)) +
@@ -212,7 +212,7 @@ qq_data %>%
   scale_color_manual(values = c("FALSE" = 'gray', "TRUE" = 'red')) +
   theme_minimal() +
   facet_wrap(~Dataset)
-  ggsave(file.path(out_path,"gene_qqplot_19q4.pdf"), width = 6, height = 3)
+ggsave(file.path(out_path,"gene_qqplot_19q4.pdf"), width = 6, height = 3)
 
 # Gene confidence ---------------------------------------------------------
 #http://archive.today/2021.03.22-122633/https://cancerdatascience.org/blog/posts/gene_confidence_blog/
@@ -243,6 +243,20 @@ gene_selection_features_19q4 <- gene_selection_features
 ProjectTemplate::cache("avana_regressed_19q4")
 ProjectTemplate::cache("sanger_regressed_19q4")
 ProjectTemplate::cache("gene_selection_features_19q4")
+
+# Flush stored objects ---------------------------------------------------
+#This helps the docker version of this script run to completion.
+rm(list = ls(all.names = TRUE))
+
+
+library(ProjectTemplate); load.project()
+
+out_path <- file.path(".", "output", "03-depmap_preprocess")
+create_output_folder(out_path)
+
+load("./cache/avana_regressed_19q4.RData")
+load("./cache/sanger_regressed_19q4.RData")
+load("./cache/gene_selection_features_19q4.RData")
 
 
 # Feature selection: max cor ---------------------------------------------
@@ -299,9 +313,9 @@ ggsave(g4, filename = file.path(out_path, "low_conf_perturbation.pdf"), width = 
 
 # Filtered Webster input -------------------------------------------------------------------
 avana_19q4_webster <- avana_regressed_19q4[,total_genes %>%
-                                                       dplyr::filter(confidence > conf_threshold,
-                                                              Max_Cor > correlation_threshold,
-                                                              Diff > diff_threshhold) %>%
+                                             dplyr::filter(confidence > conf_threshold,
+                                                           Max_Cor > correlation_threshold,
+                                                           Diff > diff_threshhold) %>%
                                              pull(Gene) %>%
                                              setdiff(high_var_outliers)]
 

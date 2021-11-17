@@ -155,4 +155,9 @@ source("./env/setup_folders.R")
 #can skip those, as all those outputs are available here:
 #https://figshare.com/articles/dataset/Webster_Supplemental_Output/14963561
 
+#ProjectTemplate provides a command, run_project(), that will automatically
+#execute all files in gene_fn/src in alphabetical order. It will take ~ 1 hr to 
+#crunch through all the analyses and the output folder will be automatically
+#populated.
+
 
