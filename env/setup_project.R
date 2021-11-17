@@ -135,3 +135,17 @@ load.project()
 #               failed to load cairo DLL
               
 #We have taken care of this in our Docker dependencies, so if you're using Docker this should be fine.
+
+
+
+
+# Step 6: Run! ------------------------------------------------------------
+
+#After these setup steps, you are ready to run items in the gene_fn/src folder.
+#They are ordered to be run one after the other.
+#supplement.R and portal_assets.R are helper scripts I wrote for 
+#generating supplemental assets and file for our online portal. Users
+#can skip those, as all those outputs are available here:
+#https://figshare.com/articles/dataset/Webster_Supplemental_Output/14963561
+
+
