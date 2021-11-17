@@ -115,16 +115,13 @@ if (check_bioc) {
 
 
 
-# Step 3: Setup folders --------------------------------------------------
-source("./env/setup_folders.R")
-
-
-# Step 4: Test ProjectTemplate --------------------------------------------------
+# Step 3: Test ProjectTemplate and setup folders --------------------------------------------------
 
 ### Test load the package
 
 library(ProjectTemplate)
 load.project()
+source("./env/setup_folders.R")
 
 #The load.project command should run without errors. It may ask you to perform migrate.project() if it is missing any folders etc.
 
