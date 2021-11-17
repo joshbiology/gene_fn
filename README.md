@@ -14,6 +14,7 @@ From the command line:
 $ git clone https://github.com/joshbiology/gene_fn.git
 ```
 
+
 ## Acquire data
 
 You can download the data manually at
@@ -22,18 +23,8 @@ and place it into a gene_fn/data folder.
 
 Or, you can run gene_fn/load_data.sh, which automates the above.
 
-## Acquire software dependencies
 
-The code has been tested on R version 4.1.2. 
-
-
-We include a table of the required packages in order to run all of the scripts included. If these packages are missing from your R environment, they will flag missing package errors during runtime. One can either install all the packages up front, or run individual scripts of interest and manage package dependencies on the fly.
-
-We are also preparing a docker image of the frozen R and package dependnecies that one can use as the basis for running these scripts. 
-
-# Obtaining data
-
-The figshare repository [https://doi.org/10.6084/m9.figshare.14960006] consists of a single zipped folder, named 'data', that one should download and copy (or mount) into the root folder. The structure of the folder will look as follows:
+The figshare repository consists of a single zipped folder, named 'data' structured as follows:
 
 ```
 data
@@ -59,6 +50,47 @@ data
 
 If you are interested in only the (1) input data matrices for Webster's factorizations and/or (2) The Webster output that were the basis of the figures, we created a second repository that holds these supplemental tables [https://doi.org/10.6084/m9.figshare.14963561].
 
+
+## Acquire software dependencies
+
+The code has been tested on R version 4.1.2. 
+
+There are two ways to acquire needed packages: install locally, or use our Docker image.
+
+If you are running locally, skip to Setup Project below.
+
+If you wish to use the docker image, install [Docker](https://www.docker.com) and run:
+
+```
+$ docker pull jlpan2/gene_fn
+```
+
+Then, you can mount the cloned directory and start a docker container:
+
+```
+docker run -v $[PATH TO CLONED DIR]:/gene_fn -it jlpan2/gene_fn
+
+```
+
+## Setup project
+
+This script contains everything you need to set up your project locally. In an R session
+in local clone of gene_fn, run 
+
+```
+source("./env/setup_project.R")
+```
+And follow through the instructions in the comments. You may need to perform
+local operations to enable graphics. If you are using a docker container, you should
+still run this step but those dependencies should be available to you.
+
+## Run the src directory.
+You can run each file in the src directory, or run them all using
+
+```
+ProjectTemplate::run.project()
+```
+
 # Figure to directory mapping
 ```
 Figure 1 | 01-synthetic_example
@@ -70,7 +102,8 @@ Figure 6 | 09-projection
 ```
 
 
-# SessionInfo
+# sessionInfo()
+
 ```
 R version 4.1.2 (2021-11-01)
 Platform: x86_64-apple-darwin17.0 (64-bit)

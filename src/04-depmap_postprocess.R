@@ -1,8 +1,11 @@
 library(ProjectTemplate); load.project()
 
-require(future)
+
 require(purrr)
-plan(multisession)
+
+#Commenting out parallelization since its incompatible with Docker mem. limits.
+#require(future)
+#plan(multisession)
 
 
 out_path <- file.path(".", "output", "04-depmap_postprocess")
