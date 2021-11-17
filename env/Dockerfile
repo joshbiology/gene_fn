@@ -20,4 +20,8 @@ RUN ["installGithub.r", "r-lib/scales@a33f8ef9d2930f4940f9c694ba6ba79480965cec",
 
 RUN apt-get install libxtst6 -y
 
+RUN R -e 'install.packages("https://cran.r-project.org/src/contrib/Archive/FastImputation/FastImputation_2.0.tar.gz", repos = NULL, type="source")'
+
+RUN ["install2.r", "ff"]
+
 WORKDIR /gene_fn/

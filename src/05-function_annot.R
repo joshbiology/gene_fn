@@ -92,8 +92,6 @@ walk(1:webster_depmap$rank, plot_cell_loadings)
 essential_genes <- read_tsv("./data/raw/depmap/public-19q4_v23-common-essentials.tsv")$gene %>%
   convert_genes("cds_id", "symbol")
 
-hart_essentials <- read_tsv("./data/raw/hart/")
-
 gene_loadings_df <- webster_depmap %>%
   get_gene_mat() %>%
   set_colnames(paste("V", 1:webster_depmap$rank, sep = "")) %>%
@@ -115,15 +113,19 @@ frac_essential <- map_dbl(factor_genes, function(x) {
   length(intersect(x, essential_genes))/length(x)
 })
 
-factor_gost_results <- map(factor_genes, function(x) {
-  gprofiler2::gost(query = c(query = x, organism = "hsapiens", ordered_query = T))
-})
+#Warning: This step hits a webserver and takes some time to run. 
+#For reproducibility, we're keeping this command here
+#But the webserver results will be stored in the data/interim folder.
 
-ProjectTemplate::cache("factor_gost_results")
+# factor_gost_results <- map(factor_genes, function(x) {
+#   gprofiler2::gost(query = c(query = x, organism = "hsapiens", ordered_query = T))
+# })
+# 
+# ProjectTemplate::cache("factor_gost_results")
 
 # Aggregate and name ------------------------------------------------------\
 require(gprofiler2)
-load("./cache/factor_gost_results.RData")
+load("./data/interim/factor_gost_results.RData")
 
 #Plot gost output
 #https://cran.r-project.org/web/packages/gprofiler2/vignettes/gprofiler2.html
@@ -151,12 +153,6 @@ factor_gost_results %>%
 
 
 
-# STRINGdb ----------------------------------------------------------------
-#https://bioconductor.org/packages/devel/bioc/manuals/STRINGdb/man/STRINGdb.pdf
-
-
-
-
 # Number of pleiotropic genes ---------------------------------------------
 
 threshold <- 0.25
@@ -181,6 +177,7 @@ factor_pleiotrop_df <- loadings_df %>%
 
 nrow(factor_pleiotrop_df)
 
+#Plotting pleiotropy networks
 plot_pleiotropy_network <- function(fns) {
   require(igraph)
   require(tidygraph)
@@ -243,7 +240,8 @@ plot_biomarkers <- function(index, trim_length = 55) {
     coord_flip() +
     facet_wrap(~model, scales = "free") +
     geom_text(data = labels, aes(label = Label, x = -Inf, y = -Inf), vjust = -1, hjust=-1) +
-    ggtitle(paste("V", index, sep = "")) +
+    ggtitle(paste("V", index, sep = ""))
+  
     ggsave(file.path(out_path, paste("biomarker_", index, "_", "scores", ".pdf", sep = "")), width = 15, height = 8, device= cairo_pdf)
 }
 

@@ -6,21 +6,6 @@ create_output_folder(out_path)
 
 # Functions ----------------------------------------------------------------
 
-#returns the genes and columns invovled.
-extract_atoms <- function(mat, gene, loading_threshold = 8) {
-  # set col names
-  colnames(mat) <- paste("V", 1:ncol(mat), sep = "")
-  
-  gene_loadings <- mat[gene, ]
-  col_index <- abs(gene_loadings) > 0
-  
-  row_tmp <- rowSums(abs(mat[,col_index]))
-  row_index <- row_tmp > loading_threshold
-  
-  
-  return(mat[row_index, col_index])
-  
-}
 
 
 generate_sparse_code_heatmaps <- function(gene) { #cds_id expected
@@ -68,11 +53,11 @@ fitness_mat <- avana_19q4_webster %>%
 fitness_mat_2 <- recon(webster_depmap) %>% t() %>% scale() %>% t()
 
 # Heatmaps -------------------------------------------------------------------
-
+#Used in paper
 generate_sparse_code_heatmaps(convert_genes("SHOC2", 'symbol', 'cds_id'))
 
+#Other examples
 generate_sparse_code_heatmaps(convert_genes("C12orf49", 'symbol', 'cds_id'))
-
 generate_sparse_code_heatmaps(convert_genes("C7orf26", 'symbol', 'cds_id'))
 
 

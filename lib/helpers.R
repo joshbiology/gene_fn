@@ -77,6 +77,7 @@ generate_graph <- function(mat, rank = 5) {
 }
 
 # Dual graph regularized dictionary learning (DGRDL) utils ------------------------
+#import_graphdl -- converts matlab object into list.
 import_graphdl <- function(matlab_obj) {
   
   index <- names(matlab_obj)
@@ -90,5 +91,18 @@ import_graphdl <- function(matlab_obj) {
        X = X)
 }
 
-
+#extract_atoms --returns the genes and columns involved.
+extract_atoms <- function(mat, gene, loading_threshold = 8) {
+  # set col names
+  colnames(mat) <- paste("V", 1:ncol(mat), sep = "")
+  
+  gene_loadings <- mat[gene, ]
+  col_index <- abs(gene_loadings) > 0
+  
+  row_tmp <- rowSums(abs(mat[,col_index]))
+  row_index <- row_tmp > loading_threshold
+  
+  
+  return(mat[row_index, col_index])
+}
 
