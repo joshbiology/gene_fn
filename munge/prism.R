@@ -1,7 +1,7 @@
 # Prism -------------------------------------------------------------------
 #primary-screen-e5c7
 prism_lfc <- read_csv(file.path(".", "data", "raw", "prism", "primary-screen-public-tentative_v11-primary-replicate-collapsed-logfold-change.csv")) %>%
-  column_to_rownames("X1") %>%
+  column_to_rownames("...1") %>%
   as.matrix()
 prism_meta <- read_tsv(file.path(".", "data", "raw", "prism", "primary-screen-public-tentative_v11-primary-replicate-collapsed-treatment-info.tsv"))
 
@@ -14,7 +14,7 @@ prism_secondary_meta <- read_tsv(file.path(".", "data", "raw", "prism","secondar
 
 prism_secondary_lfc <- read_csv(file.path(".", "data", "raw", "prism",
                                           "secondary-screen-public-tentative_v18-secondary-replicate-collapsed-logfold-change.csv")) %>%
-  column_to_rownames("X1") %>%
+  column_to_rownames("...1") %>%
   as.matrix()
 
 prism_secondary_rownames <- read_tsv(file.path(".", "data", "raw", "prism", "secondary-screen-public-tentative_v18-cell-line-info.tsv")) %>%
