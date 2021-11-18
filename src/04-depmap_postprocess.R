@@ -3,7 +3,8 @@ library(ProjectTemplate); load.project()
 
 require(purrr)
 
-#Commenting out parallelization since its incompatible with Docker mem. limits.
+#Warning - this script is very memory intensive. For the memory intensive chunks
+#I have saved precalculated metrics that you can use for plotting.
 #require(future)
 #plan(multisession)
 

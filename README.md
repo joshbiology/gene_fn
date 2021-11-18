@@ -85,11 +85,14 @@ local operations to enable graphics. If you are using a docker container, you sh
 still run this step but those dependencies should be available to you.
 
 ## Run the src directory.
-You can run each file in the src directory, or run them all using
+You can run each file in the src directory, or run them all using:
 
 ```
 ProjectTemplate::run.project()
 ```
+
+If using Docker, make sure to allocate plenty of memory for your containers, as 
+processes will crash once memory limits are reached.
 
 # Figure to directory mapping
 ```
